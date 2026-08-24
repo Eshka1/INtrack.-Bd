@@ -4,7 +4,6 @@ Project: IN-Track Inventory Management System
 
 Database: MongoDB
 
-This package follows the provided CSE470 UML class diagram and MongoDB implementation structure.
 
 Collections:
 1. SuperAdmin
@@ -29,5 +28,4 @@ Technology:
 - FastAPI compatible
 - Beanie/Motor compatible
 
-Note:
-UML methods are application-level methods and are not stored as database fields.
+
