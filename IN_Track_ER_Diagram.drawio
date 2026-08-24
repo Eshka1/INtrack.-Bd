@@ -1,0 +1,50 @@
+<mxfile host="app.diagrams.net" modified="2026-08-24T00:00:00.000Z" agent="ChatGPT" version="24.7.17">
+<diagram name="IN-Track ER Diagram">
+<mxGraphModel dx="2400" dy="1800" grid="1" gridSize="10" page="1" pageWidth="2600" pageHeight="1800">
+<root>
+<mxCell id="0"/>
+<mxCell id="1" parent="0"/>
+
+<mxCell id="company" value="COMPANY&#xa;----------------&#xa;PK company_id&#xa;company_name&#xa;uid&#xa;password&#xa;FK subscription_id" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="800" y="350" width="280" height="220" as="geometry"/></mxCell>
+
+<mxCell id="subscription" value="SUBSCRIPTION&#xa;----------------&#xa;PK subscription_id&#xa;plan_name&#xa;start_date&#xa;monthly_price&#xa;yearly_price" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="800" y="50" width="280" height="230" as="geometry"/></mxCell>
+
+<mxCell id="superadmin" value="SUPERADMIN&#xa;----------------&#xa;PK superadmin_id&#xa;uname&#xa;password" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1450" y="50" width="250" height="170" as="geometry"/></mxCell>
+
+<mxCell id="admin" value="ADMIN&#xa;----------------&#xa;PK admin_id&#xa;username&#xa;password" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="200" y="50" width="250" height="170" as="geometry"/></mxCell>
+
+<mxCell id="role" value="ROLE&#xa;----------------&#xa;PK role_id&#xa;FK company_id&#xa;role_name" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="200" y="350" width="250" height="180" as="geometry"/></mxCell>
+
+<mxCell id="owner" value="OWNER&#xa;----------------&#xa;PK owner_id&#xa;FK company_id&#xa;owner_name&#xa;email" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="200" y="700" width="250" height="190" as="geometry"/></mxCell>
+
+<mxCell id="manager" value="MANAGER&#xa;----------------&#xa;PK manager_id&#xa;FK company_id&#xa;name&#xa;email&#xa;password" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="550" y="700" width="280" height="210" as="geometry"/></mxCell>
+
+<mxCell id="inventory" value="INVENTORY&#xa;----------------&#xa;PK inventory_id&#xa;FK company_id&#xa;field&#xa;materials" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="950" y="700" width="260" height="190" as="geometry"/></mxCell>
+
+<mxCell id="raw" value="RAW_MATERIALS&#xa;----------------&#xa;PK raw_id&#xa;FK inventory_id&#xa;raw_name&#xa;itemqty&#xa;costprice&#xa;sellingprice" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="950" y="1050" width="300" height="240" as="geometry"/></mxCell>
+
+<mxCell id="clients" value="CLIENTS&#xa;----------------&#xa;PK client_id&#xa;name" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1450" y="400" width="240" height="160" as="geometry"/></mxCell>
+
+<mxCell id="req" value="CLIENT_REQUIREMENT&#xa;----------------&#xa;PK requirement_id&#xa;FK client_id&#xa;product_name&#xa;per_piece_req" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1450" y="700" width="280" height="200" as="geometry"/></mxCell>
+
+<mxCell id="order" value="ORDER&#xa;----------------&#xa;PK order_id&#xa;FK company_id&#xa;order_date&#xa;order_status" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1450" y="1050" width="260" height="190" as="geometry"/></mxCell>
+
+<mxCell id="expense" value="EXPENSES&#xa;----------------&#xa;PK expense_id&#xa;FK company_id&#xa;expense_name&#xa;money" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1900" y="700" width="260" height="190" as="geometry"/></mxCell>
+
+<mxCell id="balance" value="BALANCESHEET&#xa;----------------&#xa;PK balance_id&#xa;FK company_id&#xa;date" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1900" y="1050" width="260" height="170" as="geometry"/></mxCell>
+
+<!-- edges -->
+<mxCell id="e1" value="gets" edge="1" parent="1" source="company" target="subscription"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e2" value="monitors" edge="1" parent="1" source="superadmin" target="company"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e3" value="has" edge="1" parent="1" source="company" target="manager"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e4" value="defines" edge="1" parent="1" source="company" target="role"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e5" value="contains" edge="1" parent="1" source="inventory" target="raw"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e6" value="has" edge="1" parent="1" source="clients" target="req"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e7" value="creates" edge="1" parent="1" source="company" target="order"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e8" value="records" edge="1" parent="1" source="company" target="expense"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e9" value="generates" edge="1" parent="1" source="company" target="balance"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+</root>
+</mxGraphModel>
+</diagram>
+</mxfile>
