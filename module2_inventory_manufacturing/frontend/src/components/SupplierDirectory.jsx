@@ -1,144 +1,263 @@
 import React, { useState } from 'react';
-import { Star, Clock, CheckCircle, Mail, Phone, Plus, UserPlus } from 'lucide-react';
+import { Building2, Plus, Trash2, Star, Clock, Mail, CheckCircle2 } from 'lucide-react';
 
-export default function SupplierDirectory({ suppliers, onAddSupplier }) {
+export default function SupplierDirectory({ suppliers = [], onAddSupplier, onDeleteSupplier }) {
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    contactPerson: '',
-    contactEmail: '',
-    contactPhone: '',
-    leadTimeDays: 5,
-    reliabilityRating: 5.0,
-  });
+  const [name, setName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [leadTimeDays, setLeadTimeDays] = useState(3);
+  const [products, setProducts] = useState([
+    { name: '', sku: '', unit: 'spools', unitPrice: '' }
+  ]);
+
+  const handleAddProductRow = () => {
+    setProducts([...products, { name: '', sku: '', unit: 'units', unitPrice: '' }]);
+  };
+
+  const handleRemoveProductRow = (index) => {
+    setProducts(products.filter((_, i) => i !== index));
+  };
+
+  const handleProductChange = (index, field, value) => {
+    const updated = [...products];
+    updated[index][field] = value;
+    setProducts(updated);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onAddSupplier({ ...formData, _id: `sup_${Date.now()}`, fulfillmentRate: 99.0 });
+    const validProducts = products.filter(p => p.name.trim() && p.unitPrice !== '');
+    if (!name.trim()) {
+      alert('Please enter a supplier name.');
+      return;
+    }
+
+    const newSupplier = {
+      _id: `sup_${Date.now()}`,
+      name,
+      contactEmail: contactEmail || 'N/A',
+      leadTimeDays: Number(leadTimeDays) || 3,
+      reliabilityScore: 5.0,
+      products: validProducts.map(p => ({
+        name: p.name,
+        sku: p.sku || `SKU-${Math.floor(100 + Math.random() * 900)}`,
+        unit: p.unit || 'units',
+        unitPrice: parseFloat(p.unitPrice) || 0
+      }))
+    };
+
+    if (onAddSupplier) {
+      onAddSupplier(newSupplier);
+    }
+
     setShowModal(false);
-    setFormData({ name: '', contactPerson: '', contactEmail: '', contactPhone: '', leadTimeDays: 5, reliabilityRating: 5.0 });
+    setName('');
+    setContactEmail('');
+    setLeadTimeDays(3);
+    setProducts([{ name: '', sku: '', unit: 'units', unitPrice: '' }]);
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-serif text-2xl text-emerald-50">Supplier & Vendor Directory</h2>
-          <p className="text-xs text-emerald-300/60 mt-0.5">Manage trade partners, historical lead times & performance metrics</p>
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-emerald-950/40 border border-emerald-500/20 backdrop-blur-md rounded-2xl p-6 shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400">
+            <Building2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-emerald-300">Supplier & Catalog Directory</h2>
+            <p className="text-sm text-emerald-200/70">Manage vendor profiles and their active product catalogs with unit pricing.</p>
+          </div>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-emerald-300 hover:bg-emerald-200 text-forest-950 font-semibold px-4 py-2 rounded-2xl text-xs flex items-center gap-2 shadow-lg shadow-emerald-400/20 transition-all duration-200"
+          className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-[#06130e] font-semibold rounded-xl flex items-center gap-2 transition shadow-lg shadow-emerald-500/20 cursor-pointer"
         >
-          <Plus className="w-4 h-4" /> Add New Supplier
+          <Plus className="w-4 h-4" /> Register New Supplier
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {suppliers.map((s) => (
-          <div key={s._id} className="glass-panel p-5 rounded-3xl border border-emerald-500/20 relative group hover:border-emerald-400/40 transition">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h3 className="font-serif text-lg font-semibold text-emerald-100">{s.name}</h3>
-                <p className="text-xs text-emerald-300/70">{s.contactPerson}</p>
-              </div>
-              <div className="flex items-center gap-1 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-400/20 text-amber-300 text-xs font-semibold">
-                <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
-                {s.reliabilityRating.toFixed(1)}
-              </div>
-            </div>
+      {/* Supplier Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {suppliers.map((s) => {
+          const supplierId = s._id || s.id;
+          return (
+            <div key={supplierId} className="bg-emerald-950/30 border border-emerald-500/20 backdrop-blur-md rounded-2xl p-5 space-y-4 shadow-lg hover:border-emerald-500/40 transition flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-emerald-100 text-lg">{s.name}</h3>
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-300/70 mt-1">
+                      <Mail className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{s.contactEmail || 'No contact email'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      <Star className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" /> {s.reliabilityScore ?? 5.0}
+                    </span>
+                    {onDeleteSupplier && (
+                      <button
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to remove ${s.name}?`)) {
+                            onDeleteSupplier(supplierId);
+                          }
+                        }}
+                        className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 transition cursor-pointer"
+                        title="Remove Supplier"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-            <div className="space-y-1.5 text-xs text-emerald-200/80 my-4">
-              <div className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-emerald-400" /> {s.contactEmail}
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-emerald-400" /> {s.contactPhone}
-              </div>
-            </div>
+                <div className="flex items-center gap-2 text-xs text-emerald-300/90">
+                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Standard Lead Time: <strong>{s.leadTimeDays ?? 3} days</strong></span>
+                </div>
 
-            <div className="pt-3 border-t border-emerald-900/40 grid grid-cols-2 gap-2 text-[11px]">
-              <div className="flex items-center gap-1.5 text-emerald-300/80 bg-forest-950/50 p-2 rounded-xl">
-                <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Lead Time: <strong>{s.leadTimeDays}d</strong></span>
-              </div>
-              <div className="flex items-center gap-1.5 text-emerald-300/80 bg-forest-950/50 p-2 rounded-xl">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Fulfillment: <strong>{s.fulfillmentRate}%</strong></span>
+                {/* Supplied Products List */}
+                <div className="border-t border-emerald-500/20 pt-3 space-y-2">
+                  <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Supplied Catalog:</span>
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    {(s.products && s.products.length > 0) ? (
+                      s.products.map((p, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-xs bg-[#06130e]/70 px-3 py-2 rounded-xl border border-emerald-500/15">
+                          <div>
+                            <span className="text-emerald-100 font-medium block">{p.name}</span>
+                            {p.sku && <span className="text-[10px] text-emerald-400/60 font-mono">{p.sku}</span>}
+                          </div>
+                          <span className="text-emerald-300 font-bold bg-emerald-950/60 px-2 py-1 rounded-lg border border-emerald-500/20">
+                            ${p.unitPrice ?? 0} / {p.unit || 'unit'}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-emerald-400/50 italic py-1">No products registered yet</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Add Supplier Modal */}
+      {/* Registration Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-forest-950/80 backdrop-blur-md">
-          <div className="glass-panel p-6 rounded-3xl max-w-md w-full border border-emerald-400/30">
-            <h3 className="font-serif text-xl text-emerald-100 mb-4">Register New Supplier Partner</h3>
-            <form onSubmit={handleSubmit} className="space-y-3 text-xs">
-              <div>
-                <label className="text-emerald-300/80 block mb-1">Company Name</label>
-                <input
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="glass-input w-full p-2.5 rounded-xl"
-                  placeholder="e.g. Apex Industrial Fabrics Ltd"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-emerald-300/80 block mb-1">Contact Person</label>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-[#06130e] border border-emerald-500/30 rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold text-emerald-300">Register Supplier & Catalog Items</h3>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1 md:col-span-1">
+                  <label className="text-xs text-emerald-400 font-semibold">Vendor Name</label>
                   <input
-                    value={formData.contactPerson}
-                    onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                    className="glass-input w-full p-2.5 rounded-xl"
-                    placeholder="e.g. Rafiqul Islam"
+                    type="text"
+                    placeholder="e.g. Apex Mill Ltd."
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full bg-emerald-950/40 border border-emerald-500/30 rounded-xl px-3 py-2 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400"
+                    required
                   />
                 </div>
-                <div>
-                  <label className="text-emerald-300/80 block mb-1">Lead Time (Days)</label>
+                <div className="space-y-1 md:col-span-1">
+                  <label className="text-xs text-emerald-400 font-semibold">Contact Email</label>
+                  <input
+                    type="email"
+                    placeholder="orders@vendor.com"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    className="w-full bg-emerald-950/40 border border-emerald-500/30 rounded-xl px-3 py-2 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400"
+                  />
+                </div>
+                <div className="space-y-1 md:col-span-1">
+                  <label className="text-xs text-emerald-400 font-semibold">Lead Time (Days)</label>
                   <input
                     type="number"
-                    value={formData.leadTimeDays}
-                    onChange={(e) => setFormData({ ...formData, leadTimeDays: Number(e.target.value) })}
-                    className="glass-input w-full p-2.5 rounded-xl"
+                    min="1"
+                    value={leadTimeDays}
+                    onChange={(e) => setLeadTimeDays(e.target.value)}
+                    className="w-full bg-emerald-950/40 border border-emerald-500/30 rounded-xl px-3 py-2 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400"
                   />
                 </div>
               </div>
-              <div>
-                <label className="text-emerald-300/80 block mb-1">Email</label>
-                <input
-                  type="email"
-                  value={formData.contactEmail}
-                  onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                  className="glass-input w-full p-2.5 rounded-xl"
-                  placeholder="vendor@mail.com"
-                />
+
+              {/* Product Catalog Entries */}
+              <div className="space-y-3 pt-3 border-t border-emerald-500/20">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-semibold uppercase text-emerald-400">Products Sold & Contract Price</label>
+                  <button
+                    type="button"
+                    onClick={handleAddProductRow}
+                    className="text-xs text-emerald-300 hover:text-emerald-100 flex items-center gap-1 font-semibold cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Another Product
+                  </button>
+                </div>
+
+                {products.map((p, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-center bg-emerald-950/20 p-2.5 rounded-xl border border-emerald-500/20">
+                    <input
+                      type="text"
+                      placeholder="Product Name"
+                      value={p.name}
+                      onChange={(e) => handleProductChange(idx, 'name', e.target.value)}
+                      className="col-span-4 bg-[#06130e] border border-emerald-500/30 rounded-lg px-2.5 py-1.5 text-xs text-emerald-100 focus:outline-none focus:border-emerald-400"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="SKU"
+                      value={p.sku}
+                      onChange={(e) => handleProductChange(idx, 'sku', e.target.value)}
+                      className="col-span-3 bg-[#06130e] border border-emerald-500/30 rounded-lg px-2.5 py-1.5 text-xs text-emerald-100 focus:outline-none"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Unit (e.g. kg)"
+                      value={p.unit}
+                      onChange={(e) => handleProductChange(idx, 'unit', e.target.value)}
+                      className="col-span-2 bg-[#06130e] border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-emerald-100 focus:outline-none"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Price ($)"
+                      value={p.unitPrice}
+                      onChange={(e) => handleProductChange(idx, 'unitPrice', e.target.value)}
+                      className="col-span-2 bg-[#06130e] border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-emerald-100 focus:outline-none focus:border-emerald-400"
+                      required
+                    />
+                    <button
+                      type="button"
+                      disabled={products.length === 1}
+                      onClick={() => handleRemoveProductRow(idx)}
+                      className="col-span-1 text-red-400 hover:text-red-300 disabled:opacity-20 flex justify-center cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
-              <div>
-                <label className="text-emerald-300/80 block mb-1">Phone</label>
-                <input
-                  value={formData.contactPhone}
-                  onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                  className="glass-input w-full p-2.5 rounded-xl"
-                  placeholder="+880 1..."
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-4">
+
+              {/* Modal Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-emerald-500/20">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl text-emerald-300/60 hover:text-emerald-100"
+                  className="px-4 py-2 text-sm text-emerald-300 hover:bg-emerald-950 rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-emerald-300 text-forest-950 font-semibold px-5 py-2 rounded-xl hover:bg-emerald-200"
+                  className="px-5 py-2 text-sm bg-emerald-500 hover:bg-emerald-400 text-[#06130e] font-semibold rounded-xl shadow cursor-pointer flex items-center gap-1.5"
                 >
-                  Save Supplier
+                  <CheckCircle2 className="w-4 h-4" /> Save Supplier & Products
                 </button>
               </div>
             </form>

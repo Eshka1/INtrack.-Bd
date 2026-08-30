@@ -1,155 +1,196 @@
 import React, { useState } from 'react';
-import { Truck, Check, FileCheck, Weight, ShieldCheck } from 'lucide-react';
+import { PackagePlus, FileText, CheckCircle2, Truck, Scale, Building2, DollarSign } from 'lucide-react';
 
-export default function POIngestionPanel({ purchaseOrders, onIngestShipment }) {
-  const [selectedPO, setSelectedPO] = useState(purchaseOrders[0] || null);
-  const [deliverySlip, setDeliverySlip] = useState('');
-  const [verifiedWeight, setVerifiedWeight] = useState('');
+export default function POIngestionPanel({ suppliers = [], onIngestPO }) {
+  const [selectedSupplierId, setSelectedSupplierId] = useState('');
+  const [selectedProductSku, setSelectedProductSku] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [slipNumber, setSlipNumber] = useState('');
+  const [notes, setNotes] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleIngest = (e) => {
-    e.preventDefault();
-    if (!selectedPO) return;
+  // Find active supplier and their dynamic product catalog
+  const activeSupplier = suppliers.find(s => (s._id || s.id) === selectedSupplierId);
+  const availableProducts = activeSupplier?.products || [];
+  const activeProduct = availableProducts.find(p => p.sku === selectedProductSku || p.name === selectedProductSku);
 
-    onIngestShipment(selectedPO._id, {
-      deliverySlipNumber: deliverySlip || `SLIP-${Date.now().toString().slice(-4)}`,
-      verifiedWeight: Number(verifiedWeight) || 120.0,
-      receivedItems: selectedPO.items.map((item) => ({
-        sku: item.sku,
-        name: item.name,
-        quantity: item.orderedQuantity,
-        unitOfMeasure: item.unitOfMeasure,
-      })),
-    });
+  const unitPrice = activeProduct?.unitPrice || 0;
+  const unit = activeProduct?.unit || 'units';
+  const totalCost = (parseFloat(quantity) || 0) * unitPrice;
+
+  const handleSupplierChange = (e) => {
+    setSelectedSupplierId(e.target.value);
+    setSelectedProductSku(''); // Reset product when supplier changes
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!activeSupplier || !activeProduct || !quantity || !slipNumber) {
+      alert('Please select supplier, product, quantity, and enter delivery slip number.');
+      return;
+    }
+
+    const payload = {
+      poNumber: `PO-${Math.floor(100000 + Math.random() * 900000)}`,
+      supplier: activeSupplier.name,
+      productName: activeProduct.name,
+      sku: activeProduct.sku,
+      unitPrice,
+      quantityReceived: parseFloat(quantity),
+      totalCost,
+      unit,
+      slipNumber,
+      notes,
+      receivedAt: new Date().toISOString()
+    };
+
+    if (onIngestPO) onIngestPO(payload);
 
     setIsSuccess(true);
-    setTimeout(() => setIsSuccess(false), 3000);
+    setTimeout(() => {
+      setIsSuccess(false);
+      setSlipNumber('');
+      setQuantity('');
+      setNotes('');
+      setSelectedProductSku('');
+    }, 2500);
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="font-serif text-2xl text-emerald-50">Purchase Order (PO) Ingestion Engine</h2>
-        <p className="text-xs text-emerald-300/60 mt-0.5">Match delivery weights against PO slips and increment warehouse balances</p>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-emerald-950/40 border border-emerald-500/20 backdrop-blur-md rounded-2xl p-6 flex items-start gap-4">
+        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400">
+          <Truck className="w-6 h-6" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-emerald-300">Purchase Order Ingestion & Weighbridge Intake</h2>
+          <p className="text-sm text-emerald-200/70">
+            Select a vendor to dynamically view their catalog products and contracted prices.
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Pending POs List */}
-        <div className="glass-panel p-5 rounded-3xl space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-2">Pending Inbound Shipments</h3>
-          {purchaseOrders.map((po) => (
-            <div
-              key={po._id}
-              onClick={() => setSelectedPO(po)}
-              className={`p-4 rounded-2xl cursor-pointer transition border ${
-                selectedPO?._id === po._id
-                  ? 'bg-emerald-900/40 border-emerald-400/50 shadow-md'
-                  : 'glass-panel-subtle border-emerald-500/10 hover:border-emerald-400/30'
-              }`}
-            >
-              <div className="flex justify-between items-center mb-1">
-                <span className="font-mono text-xs font-bold text-emerald-200">{po.poNumber}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/20">
-                  {po.status}
-                </span>
-              </div>
-              <p className="text-xs text-emerald-100 font-medium">{po.supplierName}</p>
-              <div className="flex justify-between text-[11px] text-emerald-300/60 mt-2">
-                <span>{po.items.length} line items</span>
-                <span>${po.totalCost.toFixed(2)}</span>
-              </div>
-            </div>
-          ))}
+      {isSuccess && (
+        <div className="bg-emerald-500/20 border border-emerald-400/50 rounded-xl p-4 flex items-center gap-3 text-emerald-200">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+          <span>Shipment verified! Stock incremented and purchase order fulfilled.</span>
         </div>
+      )}
 
-        {/* Right: Receiving & Verification Desk */}
-        {selectedPO && (
-          <div className="lg:col-span-2 glass-panel p-6 rounded-3xl border border-emerald-400/20 space-y-5">
-            <div className="flex justify-between items-center pb-4 border-b border-emerald-900/40">
-              <div>
-                <span className="text-xs text-emerald-400 font-mono">Receiving Inspection</span>
-                <h3 className="font-serif text-xl text-emerald-50">{selectedPO.poNumber}</h3>
-              </div>
-              <span className="text-xs bg-forest-950/80 px-3 py-1 rounded-xl text-emerald-300 border border-emerald-500/20">
-                Destination: {selectedPO.warehouseName}
+      <form onSubmit={handleSubmit} className="bg-emerald-950/30 border border-emerald-500/20 backdrop-blur-xl rounded-2xl p-6 sm:p-8 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* Supplier Dropdown */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-emerald-300 flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-emerald-400" />
+              1. Select Supplier
+            </label>
+            <select
+              value={selectedSupplierId}
+              onChange={handleSupplierChange}
+              className="w-full bg-[#06130e]/80 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400"
+              required
+            >
+              <option value="">Choose Supplier...</option>
+              {suppliers.map((s) => (
+                <option key={s._id || s.id} value={s._id || s.id}>
+                  {s.name} ({s.products?.length || 0} catalog items)
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Dynamic Product Dropdown (Filtered by Supplier) */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-emerald-300 flex items-center gap-2">
+              <PackagePlus className="w-4 h-4 text-emerald-400" />
+              2. Select Product from Supplier Catalog
+            </label>
+            <select
+              value={selectedProductSku}
+              onChange={(e) => setSelectedProductSku(e.target.value)}
+              disabled={!selectedSupplierId || availableProducts.length === 0}
+              className="w-full bg-[#06130e]/80 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400 disabled:opacity-40"
+              required
+            >
+              <option value="">
+                {!selectedSupplierId 
+                  ? 'First select a supplier above...' 
+                  : availableProducts.length === 0 
+                    ? 'No products registered for this supplier' 
+                    : 'Choose catalog item...'}
+              </option>
+              {availableProducts.map((p) => (
+                <option key={p.sku || p.name} value={p.sku || p.name}>
+                  {p.name} — ${p.unitPrice}/{p.unit}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Delivery Slip */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-emerald-300 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-emerald-400" />
+              Delivery Slip / Chalan #
+            </label>
+            <input
+              type="text"
+              value={slipNumber}
+              onChange={(e) => setSlipNumber(e.target.value)}
+              placeholder="e.g. CHALAN-2026-8801"
+              className="w-full bg-[#06130e]/80 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400"
+              required
+            />
+          </div>
+
+          {/* Quantity Input */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-emerald-300 flex items-center gap-2">
+              <Scale className="w-4 h-4 text-emerald-400" />
+              Verified Received Quantity
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                step="any"
+                min="0.01"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="e.g. 100"
+                className="w-full bg-[#06130e]/80 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400"
+                required
+              />
+              <span className="inline-flex items-center px-4 rounded-xl bg-emerald-900/50 border border-emerald-500/30 text-emerald-300 text-sm">
+                {unit}
               </span>
             </div>
+          </div>
+        </div>
 
-            {/* Line Items Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="text-emerald-400/80 border-b border-emerald-900/40">
-                    <th className="pb-2">Material / SKU</th>
-                    <th className="pb-2">Ordered Qty</th>
-                    <th className="pb-2">Unit Cost</th>
-                    <th className="pb-2">Total Value</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-emerald-950/60 text-emerald-100">
-                  {selectedPO.items.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-emerald-900/10">
-                      <td className="py-2.5">
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-[10px] text-emerald-400/60 font-mono">{item.sku}</div>
-                      </td>
-                      <td className="py-2.5 font-mono">{item.orderedQuantity} {item.unitOfMeasure}</td>
-                      <td className="py-2.5 font-mono">${item.unitCost.toFixed(2)}</td>
-                      <td className="py-2.5 font-mono">${(item.orderedQuantity * item.unitCost).toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {/* Pricing Summary Card */}
+        {activeProduct && (
+          <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-4 flex justify-between items-center text-sm">
+            <div>
+              <span className="text-emerald-400 font-semibold">Unit Price: </span>
+              <span className="text-emerald-200">${unitPrice} per {unit}</span>
             </div>
-
-            {/* Verification Form */}
-            <form onSubmit={handleIngest} className="bg-forest-950/50 p-4 rounded-2xl border border-emerald-500/20 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                <div>
-                  <label className="text-emerald-300/80 block mb-1 flex items-center gap-1.5">
-                    <FileCheck className="w-3.5 h-3.5 text-emerald-400" /> Physical Delivery Slip #
-                  </label>
-                  <input
-                    required
-                    value={deliverySlip}
-                    onChange={(e) => setDeliverySlip(e.target.value)}
-                    placeholder="e.g. PK-88392-BD"
-                    className="glass-input w-full p-2.5 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="text-emerald-300/80 block mb-1 flex items-center gap-1.5">
-                    <Weight className="w-3.5 h-3.5 text-emerald-400" /> Weighbridge Verified Gross (kg)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={verifiedWeight}
-                    onChange={(e) => setVerifiedWeight(e.target.value)}
-                    placeholder="e.g. 142.50"
-                    className="glass-input w-full p-2.5 rounded-xl"
-                  />
-                </div>
-              </div>
-
-              {isSuccess && (
-                <div className="p-3 bg-emerald-900/60 border border-emerald-400/40 text-emerald-200 rounded-xl text-xs flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-300" />
-                  Shipment validated! Warehouse inventory incremented successfully[cite: 1].
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className="w-full bg-emerald-300 hover:bg-emerald-200 text-forest-950 font-semibold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-400/20 transition"
-              >
-                <Truck className="w-4 h-4" /> Verify Slip & Ingest Warehouse Balances
-              </button>
-            </form>
+            <div>
+              <span className="text-emerald-400 font-semibold">Calculated Total: </span>
+              <span className="text-emerald-100 font-bold text-base">${totalCost.toFixed(2)}</span>
+            </div>
           </div>
         )}
-      </div>
+
+        <button
+          type="submit"
+          className="w-full py-3.5 px-6 rounded-xl font-semibold text-sm bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-[#06130e] shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2"
+        >
+          <CheckCircle2 className="w-5 h-5" />
+          Verify Delivery Slip & Ingest into Inventory
+        </button>
+      </form>
     </div>
   );
 }
