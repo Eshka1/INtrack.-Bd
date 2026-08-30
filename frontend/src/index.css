@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+  --neu-light: rgba(255,255,255,0.72);
+  --neu-dark: rgba(44, 92, 71, 0.14);
+}
+
+body {
+  background-color: #e8efeb;
+  color:#1f3830;
+  font-family:system-ui, sans-serif;
+}
+
+@layer components {
+  .neu-raised {
+    border-radius: 18px;
+    background-color:#e8efeb;
+    box-shadow: -6px -6px 12px var(--neu-light), 6px 6px 12px var(--neu-dark);
+  }
+  .neu-inset {
+    border-radius:14px;
+    background-color:#e8efeb;
+    box-shadow: inset -5px -5px 10px var(--neu-light), inset 5px 5px 10px var(--neu-dark);
+  }
+}
