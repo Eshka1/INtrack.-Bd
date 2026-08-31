@@ -75,31 +75,31 @@ const FinanceDashboard = () => {
   const remaining = dashboardData.monthlyBudget - dashboardData.monthlyExpense;
 
   const actionItems = [
-    {
-      label: "Add Expense",
-      route: "/expenses/create",
-      description: "Log new company expense entries",
-      icon: <AddExpenseIcon />
-    },
-    {
-      label: "Manage Budget",
-      route: "/budget",
-      description: "Set and update your monthly budget",
-      icon: <BudgetIcon />
-    },
-    {
-      label: "Expense History",
-      route: "/expenses",
-      description: "View & filter all past expenses",
-      icon: <HistoryIcon />
-    },
-    {
-      label: "Settings",
-      route: "/settings",
-      description: "App and account configuration",
-      icon: <SettingsIcon />
-    }
-  ];
+  {
+    label: "Add Expense",
+    route: "/finance/expenses/create",   // was "/expenses/create"
+    description: "Log new company expense entries",
+    icon: <AddExpenseIcon />
+  },
+  {
+    label: "Manage Budget",
+    route: "/finance/budget",            // was "/budget"
+    description: "Set and update your monthly budget",
+    icon: <BudgetIcon />
+  },
+  {
+    label: "Expense History",
+    route: "/finance/expenses",          // see note below — page doesn't exist yet
+    description: "View & filter all past expenses",
+    icon: <HistoryIcon />
+  },
+  {
+    label: "Settings",
+    route: "/finance/settings",          // was "/settings"
+    description: "App and account configuration",
+    icon: <SettingsIcon />
+  }
+];
 
   return (
     <div className="space-y-8">

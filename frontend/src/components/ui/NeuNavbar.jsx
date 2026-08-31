@@ -3,7 +3,10 @@ import { NavLink } from "react-router-dom";
 const links = [
   { to: "/", label: "Dashboard" },
   { to: "/finance/budget", label: "Budget" },
+  { to: "/finance/expenses", label: "Expenses" },
   { to: "/finance/expenses/create", label: "Add Expense" },
+  { to: "/finance/payables", label: "Payables" },
+  { to: "/finance/analytics", label: "Analytics" },
   { to: "/finance/settings", label: "Currency" },
 ];
 
@@ -19,9 +22,9 @@ export default function NeuNavbar() {
           className={({ isActive }) =>
             [
               "inline-block px-5 py-2.5 rounded-full text-sm font-semibold no-underline transition-all duration-150",
-              isActive
-                ? "neu-inset text-neuPrimary"
-                : "text-neuTextMuted hover:text-neuPrimary hover:bg-neuMint/10",
+                 isActive
+     ? "bg-neuPrimary/15 text-neuPrimary border border-neuPrimary/30"
+     : "text-neuTextMuted hover:text-neuPrimary hover:bg-neuPrimary/10"
             ].join(" ")
           }
         >

@@ -6,12 +6,16 @@ export default {
   ],
   theme: {
     extend: {
-      colors:{
-        neuBg:'#e8efeb',
-        neuPrimary:'#2c5c47',
-        neuMint:'#82b89e',
-        neuTextDark:'#1f3830',
-        neuTextMuted:'#547064'
+      colors: {
+        neuBg: '#0d1310',
+        neuCard: '#141b18',
+        neuPrimary: '#34d399',
+        neuPrimaryDark: '#10b981',
+        neuMint: '#6ee7b7',
+        neuTextDark: '#f3f5f4',
+        neuTextMuted: '#8b968f',
+        neuDanger: '#f87171',
+        neuBorder: 'rgba(255,255,255,0.08)',
       }
     },
   },
