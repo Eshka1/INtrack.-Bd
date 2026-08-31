@@ -1,0 +1,1 @@
+const router=require('express').Router();const Guard=require('../middleware/requireSuperAdmin');const C=require('../controllers/SuperAdminController');router.use(Guard.requireSuperAdmin);router.get('/companies',C.listCompanies);router.get('/analytics',C.analytics);router.patch('/companies/:companyId/subscription',C.overrideSubscription);module.exports=router;

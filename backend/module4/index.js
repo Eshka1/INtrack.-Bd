@@ -1,0 +1,1 @@
+const router=require('express').Router();router.use('/audit-logs',require('./routes/auditRoutes'));router.use('/super-admin',require('./routes/superAdminRoutes'));router.use('/export',require('./routes/exportRoutes'));router.use('/notifications',require('./routes/notificationRoutes'));module.exports=router;

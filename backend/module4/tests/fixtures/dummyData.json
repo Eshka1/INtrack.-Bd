@@ -1,0 +1,28 @@
+{
+  "tenant": {
+    "company_id": "COMP-001",
+    "company_name": "Demo Manufacturing Ltd",
+    "subscription_id": "SUB-PRO"
+  },
+  "manager": {
+    "id": "MGR-001",
+    "name": "Dummy Manager",
+    "role": "Manager",
+    "company_id": "COMP-001"
+  },
+  "superAdmin": {
+    "id": "SA-001",
+    "name": "Developer Admin",
+    "role": "SuperAdmin"
+  },
+  "subscription": {
+    "subscription_id": "SUB-PRO",
+    "plan_name": "Pro"
+  },
+  "notification": {
+    "_id": "NOT-001",
+    "companyId": "COMP-001",
+    "type": "ZERO_ACTIVITY",
+    "read": false
+  }
+}
