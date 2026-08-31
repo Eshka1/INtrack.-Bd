@@ -1,0 +1,13 @@
+# Dependencies
+**/node_modules/
+
+# Environment secrets - NEVER commit these
+**/.env
+
+# Build output
+**/build/
+**/dist/
+
+# Logs / OS junk
+*.log
+.DS_Store
