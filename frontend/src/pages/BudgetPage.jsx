@@ -1,7 +1,27 @@
 import { useState, useEffect } from "react";
-import { getBudget, createOrUpdateBudget } from "../services/financeApi";
+import { getBudgets, createBudget, updateBudget } from "../services/financeApi";
+import NeuCard from "../components/ui/NeuCard";
+import NeuInput from "../components/ui/NeuInput";
+import NeuButton from "../components/ui/NeuButton";
+
+// inline svg icons
+const BudgetNameIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 20h9"></path>
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+  </svg>
+);
+
+const AmountIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"></circle>
+    <path d="M12 6v12"></path>
+    <path d="M16 9H9.5a2.5 2.5 0 0 0 0 5H15"></path>
+  </svg>
+);
 
 const BudgetPage = () => {
+  const [budgetId, setBudgetId] = useState(null);
   const [budgetAmount, setBudgetAmount] = useState("");
   const [budgetName, setBudgetName] = useState("Monthly Budget");
   const [loading, setLoading] = useState(false);
@@ -13,13 +33,12 @@ const BudgetPage = () => {
     const loadBudget = async () => {
       setPageLoading(true);
       try {
-        const res = await getBudget();
-        const backendData = res.data.data;
-        if (backendData?.name) {
-          setBudgetName(backendData.name);
-        }
-        if (backendData?.monthlyAmount !== undefined) {
-          setBudgetAmount(String(backendData.monthlyAmount));
+        const res = await getBudgets();
+        const existing = (res.data.data || [])[0];
+        if (existing) {
+          setBudgetId(existing._id);
+          setBudgetName(existing.name);
+          setBudgetAmount(String(existing.monthlyAmount));
         }
       } catch (err) {
         setError("Failed to load budget data");
@@ -33,36 +52,33 @@ const BudgetPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("form submit triggered, payload preparing");
+    if (!budgetAmount || Number(budgetAmount) <= 0) {
+      setError("Monthly budget amount must be greater than zero");
+      return;
+    }
 
     const payload = {
       name: budgetName,
-      currency: 'BDT',
+      currency: "BDT",
       category: "Other",
       dueDay: 1,
       startDate: new Date().toISOString(),
       monthlyAmount: Number(budgetAmount),
     };
 
-    console.log("👉 payload to send:", payload);
     setLoading(true);
     setError(null);
     setSuccessMsg("");
     try {
-      console.log("calling createOrUpdateBudget api");
-      await createOrUpdateBudget(payload);
-      console.log("api call success");
-      setSuccessMsg("Budget saved successfully!");
-      const res = await getBudget();
-      const backendData = res.data.data;
-      setBudgetName(backendData.name);
-      setBudgetAmount(String(backendData.monthlyAmount));
-    } catch (err) {
-      console.log("❌ API FULL ERROR:", err);
-      if (err.response) {
-        console.log("✅ BACKEND STATUS:", err.response.status);
-        console.log("✅ BACKEND ERROR BODY:", err.response.data);
+      if (budgetId) {
+        await updateBudget(budgetId, payload);
+      } else {
+        const createRes = await createBudget(payload);
+        setBudgetId(createRes.data.data._id);
       }
+      setSuccessMsg("Budget saved successfully!");
+    } catch (err) {
+      console.error("Save budget error:", err);
       setError("Could not save budget. Please try again.");
     } finally {
       setLoading(false);
@@ -70,45 +86,66 @@ const BudgetPage = () => {
   };
 
   if (pageLoading) {
-    return <div>Loading budget data...</div>;
+    return (
+      <div className="max-w-sm mx-auto py-8">
+        <NeuCard className="p-8 text-center text-neuTextMuted">
+          Loading budget data...
+        </NeuCard>
+      </div>
+    );
   }
 
   return (
-    <div style={{maxWidth:"600px", margin:"2rem auto", padding:"0 1rem"}}>
-      <h2>Monthly Budget Management</h2>
-      {error && <div style={{color:"red"}}>{error}</div>}
-      {successMsg && <div style={{color:"green"}}>{successMsg}</div>}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Budget Name</label>
-          <br/>
-          <input
-            type="text"
-            value={budgetName}
-            onChange={(e) => setBudgetName(e.target.value)}
-            required
-            style={{width:"100%", padding:"0.6rem", marginTop:"0.4rem"}}
-            placeholder="Budget name"
-          />
-        </div>
-        <div style={{marginTop:"12px"}}>
-          <label>Monthly Budget (BDT)</label>
-          <br/>
-          <input
-            type="number"
-            value={budgetAmount}
-            onChange={(e) => setBudgetAmount(e.target.value)}
-            required
-            style={{width:"100%", padding:"0.6rem", marginTop:"0.4rem"}}
-            placeholder="Enter monthly budget amount"
-          />
-        </div>
-        <div style={{marginTop:"16px"}}>
-          <button type="submit" disabled={loading} style={{padding:"0.7rem 1.4rem"}}>
+    <div className="max-w-sm mx-auto py-8">
+      <NeuCard className="p-8">
+        <h2 className="text-xl font-bold text-neuPrimary mb-6">
+          Monthly Budget Management
+        </h2>
+
+        {error && (
+          <div className="neu-inset px-4 py-3 mb-4 text-red-600 text-sm font-medium">
+            {error}
+          </div>
+        )}
+        {successMsg && (
+          <div className="neu-inset px-4 py-3 mb-4 text-neuPrimary text-sm font-medium">
+            {successMsg}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="text-sm font-medium text-neuTextMuted">Budget Name</label>
+            <div className="mt-1">
+              <NeuInput
+                icon={<BudgetNameIcon />}
+                value={budgetName}
+                onChange={(e) => setBudgetName(e.target.value)}
+                placeholder="Budget name"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-neuTextMuted">
+              Monthly Budget (BDT)
+            </label>
+            <div className="mt-1">
+              <NeuInput
+                icon={<AmountIcon />}
+                type="number"
+                value={budgetAmount}
+                onChange={(e) => setBudgetAmount(e.target.value)}
+                placeholder="Enter monthly budget amount"
+              />
+            </div>
+          </div>
+
+          <NeuButton className="w-full !mt-6" type="submit" disabled={loading}>
             {loading ? "Saving..." : "Save / Update Budget"}
-          </button>
-        </div>
-      </form>
+          </NeuButton>
+        </form>
+      </NeuCard>
     </div>
   );
 };

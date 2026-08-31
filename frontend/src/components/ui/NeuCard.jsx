@@ -1,7 +1,7 @@
-export default function NeuCard({children, className=""}){
+export default function NeuCard({ children, className = "" }) {
   return (
-    <div className={`neu-raised p-6 md:p-8 ${className}`}>
+    <div className={`neu-raised p-10 ${className}`}>
       {children}
     </div>
-  )
+  );
 }

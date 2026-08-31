@@ -1,14 +1,14 @@
 import api from "./api";
-
-// Dashboard
-export const getFinanceDashboard = async () => {
-  const res = await api.get("/finance/dashboard");
-  return res.data;
-};
+export const getCurrencySettings = async () => await api.get("/finance/currency");
+export const updateCurrencySettings = async (payload) => await api.put("/finance/currency", payload);
+export const getFinanceDashboard = async () => await api.get("/finance/dashboard");
 
 // Budget
-export const getBudget = async () => await api.get("/finance/budgets/summary");
-export const createOrUpdateBudget = async (payload) => await api.post("/finance/budgets", payload);
+export const getBudgets = async () => await api.get("/finance/budgets");
+export const getBudgetSummary = async () => await api.get("/finance/budgets/summary");
+export const createBudget = async (payload) => await api.post("/finance/budgets", payload);
+export const updateBudget = async (budgetId, payload) =>
+  await api.patch(`/finance/budgets/${budgetId}`, payload);
 
 // Expenses
 export const fetchExpenses = async () => await api.get("/finance/expenses");
