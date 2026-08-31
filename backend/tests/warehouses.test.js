@@ -61,22 +61,37 @@ describe('Part 4 -- Multi-Warehouse / Location Mapping', () => {
     const { token } = await registerCompany();
     const { token: otherToken } = await registerCompany();
 
-    const first = await request(app)
+    // Use sub-locations (shelves) here rather than a second top-level
+    // warehouse -- the Free tier only allows 1 top-level warehouse, and a
+    // second one would correctly get blocked by the subscription limit
+    // (403) before ever reaching the duplicate-name check (400). Nesting
+    // under a parent isolates what this test is actually verifying.
+    const building = await request(app)
       .post('/api/warehouses')
       .set(authHeader(token))
       .send({ name: 'Main Warehouse' });
+    expect(building.status).toBe(201);
+
+    const first = await request(app)
+      .post('/api/warehouses')
+      .set(authHeader(token))
+      .send({ name: 'Shelf A', locationType: 'shelf', parentLocation: building.body.data._id });
     expect(first.status).toBe(201);
 
     const duplicate = await request(app)
       .post('/api/warehouses')
       .set(authHeader(token))
-      .send({ name: 'Main Warehouse' });
+      .send({ name: 'Shelf A', locationType: 'shelf', parentLocation: building.body.data._id });
     expect(duplicate.status).toBe(400);
 
-    const otherTenantSameName = await request(app)
+    const otherBuilding = await request(app)
       .post('/api/warehouses')
       .set(authHeader(otherToken))
       .send({ name: 'Main Warehouse' });
+    const otherTenantSameName = await request(app)
+      .post('/api/warehouses')
+      .set(authHeader(otherToken))
+      .send({ name: 'Shelf A', locationType: 'shelf', parentLocation: otherBuilding.body.data._id });
     expect(otherTenantSameName.status).toBe(201);
   });
 
