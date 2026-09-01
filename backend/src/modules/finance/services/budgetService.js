@@ -19,9 +19,9 @@ async function createBudget(companyId, userId, data) {
 
   const budgetDoc = {
   companyId,
-  name: data.budgetName,   // read frontend budgetName
+  name: data.name,
   category: data.category,
-  monthlyAmount: roundMoney(Number(data.totalMonthlyBudget)), // read frontend totalMonthlyBudget
+  monthlyAmount,
   currency,
   normalizedMonthlyAmount,
   exchangeRateSnapshot: rateSnapshot,
@@ -32,7 +32,6 @@ async function createBudget(companyId, userId, data) {
   notes: data.notes || '',
   createdBy: userId
 };
-
   return await budgetRepo.createBudget(budgetDoc);
 }
 
