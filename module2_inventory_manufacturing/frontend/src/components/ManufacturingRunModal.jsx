@@ -1,123 +1,174 @@
 import React, { useState } from 'react';
-import { X, PlayCircle, AlertCircle } from 'lucide-react';
+import { X, PlayCircle, AlertCircle, ArrowRight } from 'lucide-react';
 
-export default function ManufacturingRunModal({ recipes = [], inventory = [], onClose, onExecute }) {
-  const [selectedRecipeId, setSelectedRecipeId] = useState('');
-  const [batches, setBatches] = useState(1);
+const CLIENT_CONVERSIONS = {
+  ton: { family: 'mass', ratio: 1000000 },
+  t: { family: 'mass', ratio: 1000000 },
+  kg: { family: 'mass', ratio: 1000 },
+  kgs: { family: 'mass', ratio: 1000 },
+  kilogram: { family: 'mass', ratio: 1000 },
+  kilograms: { family: 'mass', ratio: 1000 },
+  g: { family: 'mass', ratio: 1 },
+  gram: { family: 'mass', ratio: 1 },
+  grams: { family: 'mass', ratio: 1 },
+  mg: { family: 'mass', ratio: 0.001 },
 
-  const selectedRecipe = recipes.find(r => (r._id || r.id) === selectedRecipeId);
+  l: { family: 'volume', ratio: 1000 },
+  liter: { family: 'volume', ratio: 1000 },
+  liters: { family: 'volume', ratio: 1000 },
+  ml: { family: 'volume', ratio: 1 },
+  milliliter: { family: 'volume', ratio: 1 },
 
-  // Compute raw material requirements
-  const deductions = (selectedRecipe?.ingredients || []).map(ing => {
-    const stockItem = inventory.find(i => i._id === ing.rawMaterialId || i.name === ing.rawMaterialName);
-    const requiredQty = Number((ing.quantityRequired * batches).toFixed(2));
-    const currentStock = stockItem ? stockItem.currentBalance : 0;
-    const isSufficient = currentStock >= requiredQty;
+  km: { family: 'length', ratio: 1000000 },
+  m: { family: 'length', ratio: 1000 },
+  meter: { family: 'length', ratio: 1000 },
+  cm: { family: 'length', ratio: 10 },
+  mm: { family: 'length', ratio: 1 }
+};
 
-    return {
-      rawMaterialId: stockItem?._id || ing.rawMaterialId,
-      name: ing.rawMaterialName || stockItem?.name,
-      requiredQty,
-      currentStock,
-      unit: ing.unit,
-      isSufficient,
-      totalQty: requiredQty
-    };
-  });
+function convertClientUnits(qty, fromUnit, toUnit) {
+  const from = (fromUnit || '').toLowerCase().trim();
+  const to = (toUnit || '').toLowerCase().trim();
+  if (from === to) return qty;
 
-  const canExecute = selectedRecipe && deductions.length > 0 && deductions.every(d => d.isSufficient);
+  const uFrom = CLIENT_CONVERSIONS[from];
+  const uTo = CLIENT_CONVERSIONS[to];
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  if (uFrom && uTo && uFrom.family === uTo.family) {
+    return (qty * uFrom.ratio) / uTo.ratio;
+  }
+  return qty;
+}
+
+export default function ManufacturingRunModal({ recipes, inventory, onClose, onExecute }) {
+  const [selectedRecipeId, setSelectedRecipeId] = useState(recipes[0]?._id || '');
+  const [batchesToProduce, setBatchesToProduce] = useState(1);
+
+  const selectedRecipe = recipes.find((r) => r._id === selectedRecipeId);
+
+  const deductions = selectedRecipe
+    ? selectedRecipe.ingredients.map((ing) => {
+        const totalNeededRecipeUnit = Number((ing.quantityRequired * batchesToProduce).toFixed(4));
+        const currentInv = inventory.find(
+          (i) => i._id === ing.rawMaterialId || i.name.toLowerCase() === ing.rawMaterialName.toLowerCase()
+        );
+        const inStock = Number(currentInv?.currentBalance || 0);
+        const warehouseUnit = currentInv?.unit || ing.unit;
+
+        // Convert requirement into warehouse stock unit for balance comparison
+        const totalNeededWarehouseUnit = convertClientUnits(totalNeededRecipeUnit, ing.unit, warehouseUnit);
+        const hasEnough = inStock >= totalNeededWarehouseUnit;
+
+        return {
+          ...ing,
+          totalQty: totalNeededRecipeUnit,
+          totalNeededWarehouseUnit,
+          warehouseUnit,
+          inStock,
+          hasEnough
+        };
+      })
+    : [];
+
+  const canExecute = deductions.length > 0 && deductions.every((d) => d.hasEnough);
+
+  const handleRun = () => {
     if (!canExecute) return;
     onExecute({
-      recipeId: selectedRecipeId,
-      recipeName: selectedRecipe.name,
-      batches: Number(batches),
+      recipeId: selectedRecipe._id,
+      batches: Number(batchesToProduce),
       materialDeductions: deductions
     });
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-[#06130e] border border-emerald-500/30 rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl">
-        <div className="flex justify-between items-center border-b border-emerald-500/20 pb-3">
-          <h3 className="text-lg font-bold text-emerald-300 flex items-center gap-2">
-            <PlayCircle className="w-5 h-5 text-emerald-400" /> Execute Manufacturing Run
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="w-full max-w-lg bg-[#0a1e17] border border-emerald-500/30 rounded-2xl p-6 space-y-6 shadow-2xl">
+        <div className="flex justify-between items-center border-b border-emerald-500/20 pb-4">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <PlayCircle className="w-5 h-5 text-emerald-400" /> Execute Production Run
           </h3>
-          <button onClick={onClose} className="text-emerald-400 hover:text-white">
+          <button onClick={onClose} className="text-emerald-400 hover:text-white transition cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <div>
-            <label className="text-xs uppercase font-semibold text-emerald-400">Select Recipe</label>
+            <label className="block text-xs font-semibold text-emerald-400 mb-1">Select BOM Recipe</label>
             <select
               value={selectedRecipeId}
               onChange={(e) => setSelectedRecipeId(e.target.value)}
-              className="w-full mt-1 bg-emerald-950/40 border border-emerald-500/30 rounded-xl px-4 py-2 text-sm text-emerald-100 focus:outline-none"
-              required
+              className="w-full bg-[#071d15] border border-emerald-500/30 rounded-xl px-4 py-2 text-sm text-white focus:outline-none"
             >
-              <option value="">Choose Recipe...</option>
-              {recipes.map(r => (
-                <option key={r._id || r.id} value={r._id || r.id}>{r.name}</option>
+              {recipes.map((r) => (
+                <option key={r._id} value={r._id}>{r.name}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="text-xs uppercase font-semibold text-emerald-400">Number of Batches</label>
+            <label className="block text-xs font-semibold text-emerald-400 mb-1">Number of Batches to Produce</label>
             <input
               type="number"
               min="1"
-              value={batches}
-              onChange={(e) => setBatches(Math.max(1, Number(e.target.value)))}
-              className="w-full mt-1 bg-emerald-950/40 border border-emerald-500/30 rounded-xl px-4 py-2 text-sm text-emerald-100 focus:outline-none"
-              required
+              value={batchesToProduce}
+              onChange={(e) => setBatchesToProduce(Math.max(1, Number(e.target.value)))}
+              className="w-full bg-[#071d15] border border-emerald-500/30 rounded-xl px-4 py-2 text-sm text-white focus:outline-none font-bold"
             />
           </div>
 
-          {selectedRecipe && (
-            <div className="space-y-2 border-t border-emerald-500/20 pt-3">
-              <span className="text-xs uppercase font-semibold text-emerald-400">Stock Deduction Preview</span>
-              <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                {deductions.map((d, i) => (
-                  <div key={i} className="flex justify-between items-center text-xs p-2 rounded-lg bg-emerald-950/20 border border-emerald-500/10">
-                    <div>
-                      <span className="font-semibold text-emerald-100">{d.name}</span>
-                      <span className="text-emerald-400/70 block">Needs: {d.requiredQty} {d.unit} | In Stock: {d.currentStock} {d.unit}</span>
-                    </div>
-                    {d.isSufficient ? (
-                      <span className="text-emerald-400 font-semibold">Available</span>
-                    ) : (
-                      <span className="text-red-400 font-semibold flex items-center gap-1">
-                        <AlertCircle className="w-3.5 h-3.5" /> Insufficient
-                      </span>
-                    )}
+          <div className="space-y-2 border-t border-emerald-500/20 pt-4">
+            <span className="text-xs font-bold uppercase text-emerald-400">Unit-Normalized Stock Impact</span>
+            <div className="space-y-2">
+              {deductions.map((d, idx) => (
+                <div key={idx} className="flex justify-between items-center text-xs p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/10">
+                  <div>
+                    <p className="font-semibold text-white">{d.rawMaterialName}</p>
+                    <p className="text-emerald-300/70 text-[11px] mt-0.5">
+                      Recipe Need: <span className="text-white font-bold">{d.totalQty} {d.unit}</span>
+                      {d.unit !== d.warehouseUnit && (
+                        <span> → <strong className="text-emerald-400">{d.totalNeededWarehouseUnit} {d.warehouseUnit}</strong></span>
+                      )}
+                    </p>
+                    <p className="text-emerald-400/50 text-[10px]">
+                      Warehouse Stock: {d.inStock} {d.warehouseUnit}
+                    </p>
                   </div>
-                ))}
-              </div>
+                  {!d.hasEnough ? (
+                    <span className="text-red-400 font-bold flex items-center gap-1 bg-red-500/10 px-2 py-1 rounded-lg border border-red-500/20">
+                      <AlertCircle className="w-3.5 h-3.5" /> Deficit
+                    </span>
+                  ) : (
+                    <span className="text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                      Ready
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
-          )}
-
-          <div className="flex justify-end gap-3 pt-3 border-t border-emerald-500/20">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm text-emerald-300 hover:bg-emerald-950 rounded-xl"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!canExecute}
-              className="px-5 py-2 text-sm bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-[#06130e] font-semibold rounded-xl shadow"
-            >
-              Execute Run & Deduct Stock
-            </button>
           </div>
-        </form>
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 bg-emerald-900/40 hover:bg-emerald-900/60 text-emerald-300 rounded-xl text-xs font-semibold cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleRun}
+            disabled={!canExecute}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              canExecute
+                ? 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/20'
+                : 'bg-emerald-950 text-emerald-500/30 cursor-not-allowed border border-emerald-500/10'
+            }`}
+          >
+            Execute Run & Deduct Stock
+          </button>
+        </div>
       </div>
     </div>
   );

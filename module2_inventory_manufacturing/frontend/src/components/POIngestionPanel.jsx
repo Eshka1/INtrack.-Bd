@@ -1,194 +1,224 @@
 import React, { useState } from 'react';
-import { PackagePlus, FileText, CheckCircle2, Truck, Scale, Building2, DollarSign } from 'lucide-react';
+import { Truck, CheckCircle2, DollarSign, Building2, Package, Lock } from 'lucide-react';
 
-export default function POIngestionPanel({ suppliers = [], onIngestPO }) {
+export default function POIngestionPanel({ suppliers, onIngestPO }) {
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
-  const [selectedProductSku, setSelectedProductSku] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [slipNumber, setSlipNumber] = useState('');
-  const [notes, setNotes] = useState('');
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [quantityReceived, setQuantityReceived] = useState('');
+  const [location, setLocation] = useState('Main Warehouse Dock');
+  const [successMsg, setSuccessMsg] = useState(false);
 
-  // Find active supplier and their dynamic product catalog
-  const activeSupplier = suppliers.find(s => (s._id || s.id) === selectedSupplierId);
-  const availableProducts = activeSupplier?.products || [];
-  const activeProduct = availableProducts.find(p => p.sku === selectedProductSku || p.name === selectedProductSku);
+  // Active supplier object based on user selection
+  const currentSupplier = suppliers.find((s) => (s._id || s.id) === selectedSupplierId);
+  const supplierProducts = currentSupplier?.products || [];
 
-  const unitPrice = activeProduct?.unitPrice || 0;
-  const unit = activeProduct?.unit || 'units';
-  const totalCost = (parseFloat(quantity) || 0) * unitPrice;
+  // Automatically locked unit cost directly derived from supplier catalog
+  const unitCost = Number(selectedProduct?.unitPrice || 0);
+  const qty = Number(quantityReceived) || 0;
+  const totalCost = Number((qty * unitCost).toFixed(2));
 
+  // Reset selection when supplier changes
   const handleSupplierChange = (e) => {
-    setSelectedSupplierId(e.target.value);
-    setSelectedProductSku(''); // Reset product when supplier changes
+    const sId = e.target.value;
+    setSelectedSupplierId(sId);
+    setSelectedProduct(null);
+    setQuantityReceived('');
+  };
+
+  // Populate product details, SKU, unit, and auto unit price
+  const handleProductChange = (e) => {
+    const pName = e.target.value;
+    const prod = supplierProducts.find((p) => p.name === pName);
+    setSelectedProduct(prod || null);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!activeSupplier || !activeProduct || !quantity || !slipNumber) {
-      alert('Please select supplier, product, quantity, and enter delivery slip number.');
-      return;
-    }
+    if (!selectedSupplierId || !selectedProduct || qty <= 0) return;
 
-    const payload = {
-      poNumber: `PO-${Math.floor(100000 + Math.random() * 900000)}`,
-      supplier: activeSupplier.name,
-      productName: activeProduct.name,
-      sku: activeProduct.sku,
-      unitPrice,
-      quantityReceived: parseFloat(quantity),
-      totalCost,
-      unit,
-      slipNumber,
-      notes,
-      receivedAt: new Date().toISOString()
-    };
+    onIngestPO({
+      supplierId: currentSupplier._id || currentSupplier.id,
+      supplierName: currentSupplier.name,
+      productName: selectedProduct.name,
+      sku: selectedProduct.sku,
+      quantityReceived: qty,
+      unitCost: unitCost,
+      totalCost: totalCost,
+      unit: selectedProduct.unit || 'units',
+      location
+    });
 
-    if (onIngestPO) onIngestPO(payload);
+    setSuccessMsg(true);
+    setQuantityReceived('');
+    setSelectedProduct(null);
+    setSelectedSupplierId('');
 
-    setIsSuccess(true);
-    setTimeout(() => {
-      setIsSuccess(false);
-      setSlipNumber('');
-      setQuantity('');
-      setNotes('');
-      setSelectedProductSku('');
-    }, 2500);
+    setTimeout(() => setSuccessMsg(false), 3500);
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="bg-emerald-950/40 border border-emerald-500/20 backdrop-blur-md rounded-2xl p-6 flex items-start gap-4">
+    <div className="max-w-2xl mx-auto bg-emerald-950/40 border border-emerald-500/20 rounded-2xl p-8 backdrop-blur-xl shadow-xl">
+      <div className="flex items-center gap-3 mb-6">
         <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400">
           <Truck className="w-6 h-6" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-emerald-300">Purchase Order Ingestion & Weighbridge Intake</h2>
-          <p className="text-sm text-emerald-200/70">
-            Select a vendor to dynamically view their catalog products and contracted prices.
+          <h2 className="text-xl font-bold text-white">Purchase Order Goods Ingestion</h2>
+          <p className="text-xs text-emerald-300/70">
+            Source items from registered suppliers, calculate procurement costs, and update stock.
           </p>
         </div>
       </div>
 
-      {isSuccess && (
-        <div className="bg-emerald-500/20 border border-emerald-400/50 rounded-xl p-4 flex items-center gap-3 text-emerald-200">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-          <span>Shipment verified! Stock incremented and purchase order fulfilled.</span>
+      {successMsg && (
+        <div className="mb-6 p-4 bg-emerald-500/20 border border-emerald-500/40 rounded-xl flex items-center gap-2 text-emerald-300 text-sm">
+          <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+          <span>Purchase order intake recorded! Material balance synchronized to MongoDB.</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-emerald-950/30 border border-emerald-500/20 backdrop-blur-xl rounded-2xl p-6 sm:p-8 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* Supplier Dropdown */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-emerald-300 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-emerald-400" />
-              1. Select Supplier
-            </label>
-            <select
-              value={selectedSupplierId}
-              onChange={handleSupplierChange}
-              className="w-full bg-[#06130e]/80 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400"
-              required
-            >
-              <option value="">Choose Supplier...</option>
-              {suppliers.map((s) => (
-                <option key={s._id || s.id} value={s._id || s.id}>
-                  {s.name} ({s.products?.length || 0} catalog items)
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Dynamic Product Dropdown (Filtered by Supplier) */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-emerald-300 flex items-center gap-2">
-              <PackagePlus className="w-4 h-4 text-emerald-400" />
-              2. Select Product from Supplier Catalog
-            </label>
-            <select
-              value={selectedProductSku}
-              onChange={(e) => setSelectedProductSku(e.target.value)}
-              disabled={!selectedSupplierId || availableProducts.length === 0}
-              className="w-full bg-[#06130e]/80 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400 disabled:opacity-40"
-              required
-            >
-              <option value="">
-                {!selectedSupplierId 
-                  ? 'First select a supplier above...' 
-                  : availableProducts.length === 0 
-                    ? 'No products registered for this supplier' 
-                    : 'Choose catalog item...'}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Supplier Selector */}
+        <div>
+          <label className="block text-xs font-semibold text-emerald-400 mb-1 flex items-center gap-1.5">
+            <Building2 className="w-3.5 h-3.5" /> Select Supplier
+          </label>
+          <select
+            required
+            value={selectedSupplierId}
+            onChange={handleSupplierChange}
+            className="w-full bg-[#071d15] text-emerald-100 border border-emerald-500/40 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 cursor-pointer"
+          >
+            <option value="" className="bg-[#071d15] text-emerald-400/60 py-2">
+              -- Choose a Vetted Supplier --
+            </option>
+            {suppliers.map((s) => (
+              <option key={s._id || s.id} value={s._id || s.id} className="bg-[#071d15] text-white py-2">
+                {s.name} ({s.leadTimeDays || 3}d lead time)
               </option>
-              {availableProducts.map((p) => (
-                <option key={p.sku || p.name} value={p.sku || p.name}>
-                  {p.name} — ${p.unitPrice}/{p.unit}
-                </option>
-              ))}
-            </select>
-          </div>
+            ))}
+          </select>
+        </div>
 
-          {/* Delivery Slip */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-emerald-300 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-emerald-400" />
-              Delivery Slip / Chalan #
-            </label>
+        {/* Product Selector */}
+        <div>
+          <label className="block text-xs font-semibold text-emerald-400 mb-1 flex items-center gap-1.5">
+            <Package className="w-3.5 h-3.5" /> Select Supplier Catalog Product
+          </label>
+          <select
+            required
+            disabled={!selectedSupplierId || supplierProducts.length === 0}
+            value={selectedProduct?.name || ''}
+            onChange={handleProductChange}
+            className={`w-full bg-[#071d15] text-emerald-100 border border-emerald-500/40 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 ${
+              !selectedSupplierId || supplierProducts.length === 0
+                ? 'opacity-50 cursor-not-allowed text-emerald-400/40'
+                : 'cursor-pointer'
+            }`}
+          >
+            <option value="" className="bg-[#071d15] text-emerald-400/60 py-2">
+              {!selectedSupplierId
+                ? 'Select a supplier above first'
+                : supplierProducts.length === 0
+                ? 'No catalog items listed under this supplier'
+                : '-- Choose Material to Purchase --'}
+            </option>
+            {supplierProducts.map((p, idx) => (
+              <option key={idx} value={p.name} className="bg-[#071d15] text-white py-2">
+                {p.name} {p.sku ? `(${p.sku})` : ''} — ${p.unitPrice?.toFixed(2) || '0.00'}/{p.unit || 'unit'}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* SKU Display & Quantity */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-emerald-400 mb-1">SKU Code</label>
             <input
               type="text"
-              value={slipNumber}
-              onChange={(e) => setSlipNumber(e.target.value)}
-              placeholder="e.g. CHALAN-2026-8801"
-              className="w-full bg-[#06130e]/80 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400"
-              required
+              readOnly
+              value={selectedProduct?.sku || 'Auto-populated'}
+              className="w-full bg-[#04110c] border border-emerald-500/20 rounded-xl px-4 py-2 text-sm text-emerald-300 font-mono focus:outline-none cursor-not-allowed"
             />
           </div>
 
-          {/* Quantity Input */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-emerald-300 flex items-center gap-2">
-              <Scale className="w-4 h-4 text-emerald-400" />
-              Verified Received Quantity
-            </label>
-            <div className="flex gap-2">
+          <div>
+            <label className="block text-xs font-semibold text-emerald-400 mb-1">Quantity Received</label>
+            <div className="flex">
               <input
                 type="number"
-                step="any"
-                min="0.01"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="e.g. 100"
-                className="w-full bg-[#06130e]/80 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400"
                 required
+                min="0.1"
+                step="any"
+                value={quantityReceived}
+                onChange={(e) => setQuantityReceived(e.target.value)}
+                placeholder="e.g. 50"
+                className="w-full bg-[#071d15] border border-emerald-500/40 rounded-l-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-400 font-bold"
               />
-              <span className="inline-flex items-center px-4 rounded-xl bg-emerald-900/50 border border-emerald-500/30 text-emerald-300 text-sm">
-                {unit}
+              <span className="inline-flex items-center px-3 bg-emerald-900/50 border border-l-0 border-emerald-500/40 rounded-r-xl text-xs text-emerald-300 font-medium">
+                {selectedProduct?.unit || 'units'}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Pricing Summary Card */}
-        {activeProduct && (
-          <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-4 flex justify-between items-center text-sm">
-            <div>
-              <span className="text-emerald-400 font-semibold">Unit Price: </span>
-              <span className="text-emerald-200">${unitPrice} per {unit}</span>
+        {/* Automatic Unit Cost & Storage Location */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-emerald-400 mb-1 flex items-center justify-between">
+              <span>Unit Purchase Cost ($)</span>
+              <span className="text-[10px] text-emerald-400/60 flex items-center gap-1">
+                <Lock className="w-3 h-3" /> Locked to Supplier Rate
+              </span>
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-emerald-400 text-xs">$</span>
+              <input
+                type="text"
+                readOnly
+                value={selectedProduct ? unitCost.toFixed(2) : '0.00'}
+                className="w-full bg-[#04110c] border border-emerald-500/20 rounded-xl pl-8 pr-4 py-2 text-sm text-emerald-300 font-mono focus:outline-none cursor-not-allowed"
+              />
             </div>
-            <div>
-              <span className="text-emerald-400 font-semibold">Calculated Total: </span>
-              <span className="text-emerald-100 font-bold text-base">${totalCost.toFixed(2)}</span>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-emerald-400 mb-1">Storage Destination</label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full bg-[#071d15] border border-emerald-500/40 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-400"
+            />
+          </div>
+        </div>
+
+        {/* Total Cost Summary Card */}
+        {selectedProduct && qty > 0 && (
+          <div className="p-4 bg-[#071d15] border border-emerald-500/30 rounded-xl flex items-center justify-between">
+            <div className="flex items-center gap-2 text-emerald-300 text-xs">
+              <DollarSign className="w-4 h-4 text-emerald-400" />
+              <span>
+                Calculated Total Order Cost ({qty} {selectedProduct.unit || 'units'} @ ${unitCost.toFixed(2)}):
+              </span>
             </div>
+            <span className="text-base font-bold text-white font-mono">
+              ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
           </div>
         )}
 
         <button
           type="submit"
-          className="w-full py-3.5 px-6 rounded-xl font-semibold text-sm bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-[#06130e] shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2"
+          disabled={!selectedSupplierId || !selectedProduct || qty <= 0}
+          className={`w-full py-3 rounded-xl font-bold transition cursor-pointer shadow-lg shadow-emerald-500/20 ${
+            selectedSupplierId && selectedProduct && qty > 0
+              ? 'bg-emerald-500 hover:bg-emerald-400 text-black'
+              : 'bg-emerald-950 text-emerald-500/30 cursor-not-allowed border border-emerald-500/10'
+          }`}
         >
-          <CheckCircle2 className="w-5 h-5" />
-          Verify Delivery Slip & Ingest into Inventory
+          Confirm Purchase Order & Add to Ledger
         </button>
       </form>
     </div>
