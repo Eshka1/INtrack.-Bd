@@ -1,0 +1,24 @@
+Add these in your main server/app file:
+
+const module4Routes =
+require("./module4/routes/module4Routes");
+
+
+app.use(
+ "/api/module4",
+ module4Routes
+);
+
+
+For zero activity scheduler:
+
+const startZeroActivityJob =
+require("./module4/jobs/zeroActivityJob");
+
+
+startZeroActivityJob();
+
+
+Required packages:
+
+npm install node-cron exceljs pdfkit jest supertest
