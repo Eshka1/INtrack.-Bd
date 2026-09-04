@@ -1,1 +1,0 @@
-const router=require('express').Router();const TenantContext=require('../middleware/tenantContext');const AuditController=require('../controllers/AuditController');router.get('/',TenantContext.requireTenant,AuditController.list);module.exports=router;

@@ -1,2 +1,0 @@
-jest.mock('node-cron',()=>({schedule:jest.fn()}));jest.mock('../../../services/activityService',()=>({runZeroActivityCheck:jest.fn()}));const cron=require('node-cron');const J=require('../../../jobs/zeroActivityJob');
-describe('ZeroActivityJob',()=>{test('start schedules daily 01:00 job',()=>{const job={stop:jest.fn()};cron.schedule.mockReturnValue(job);expect(J.start()).toBe(job);expect(cron.schedule).toHaveBeenCalledWith('0 1 * * *',expect.any(Function));});});

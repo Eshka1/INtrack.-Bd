@@ -1,3 +1,0 @@
-const AuditLog=require('../models/AuditLog');
-class AuditController{static async list(req,res){try{const query={companyId:req.companyId};if(req.query.entityType)query.entityType=req.query.entityType;if(req.query.action)query.action=req.query.action;const page=Math.max(Number(req.query.page)||1,1),limit=Math.min(Math.max(Number(req.query.limit)||25,1),100);const [items,total]=await Promise.all([AuditLog.find(query).sort({createdAt:-1}).skip((page-1)*limit).limit(limit).lean(),AuditLog.countDocuments(query)]);return res.json({page,limit,total,items});}catch(error){return res.status(500).json({message:error.message});}}}
-module.exports=AuditController;

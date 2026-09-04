@@ -1,1 +1,0 @@
-function createMockResponse(){const res={};res.status=jest.fn(()=>res);res.json=jest.fn(()=>res);res.send=jest.fn(()=>res);res.setHeader=jest.fn(()=>res);return res;}module.exports={createMockResponse};

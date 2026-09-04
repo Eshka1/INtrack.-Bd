@@ -1,1 +1,0 @@
-const router=require('express').Router();const TenantContext=require('../middleware/tenantContext');const C=require('../controllers/ExportController');router.get('/',TenantContext.requireTenant,C.download);module.exports=router;

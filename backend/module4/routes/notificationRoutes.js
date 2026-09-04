@@ -1,1 +1,0 @@
-const router=require('express').Router();const TenantContext=require('../middleware/tenantContext');const C=require('../controllers/NotificationController');router.get('/',TenantContext.requireTenant,C.list);router.patch('/:id/read',TenantContext.requireTenant,C.markRead);module.exports=router;
