@@ -17,7 +17,7 @@ async function createBudget(companyId, userId, data) {
   const normalizedMonthlyAmount = convertCurrency(monthlyAmount, currency, 'BDT', rates);
   const rateSnapshot = rates[currency] || 1.0;
 
-  const budgetDoc = {
+ const budgetDoc = {
   companyId,
   name: data.name,
   category: data.category,

@@ -15,6 +15,7 @@ body {
   min-height: 100vh;
 }
 
+
 @layer components {
   /* Card panels — flat dark surface with subtle border, replaces light neumorphic shadow */
   .neu-raised {
@@ -69,4 +70,19 @@ body {
   .neu-btn-danger:hover:not(:disabled) {
     background-color: rgba(248, 113, 113, 0.2);
   }
+}
+/* Style native <select> dropdown options for dark theme */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #141b18;
+  color: #f3f5f4;
+}
+
+select option:checked,
+select option:hover {
+  background-color: #1c2622;
+  color: #34d399;
 }
