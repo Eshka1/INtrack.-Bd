@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
     getCompanies,
     getAnalytics,
@@ -8,26 +9,30 @@ import {
 
 export default function SuperAdmin(){
 
-    const [companies,setCompanies] = useState([]);
-    const [analytics,setAnalytics] = useState({});
-    const [loading,setLoading] = useState(true);
-    const [error,setError] = useState("");
+    const [companies, setCompanies] = useState([]);
+    const [analytics, setAnalytics] = useState({});
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [updatingId, setUpdatingId] = useState(null);
 
 
+    // ===============================
+    // Load Super Admin Data
+    // ===============================
 
-    useEffect(()=>{
+    useEffect(() => {
 
         loadData();
 
-    },[]);
+    }, []);
 
 
+    const loadData = async () => {
 
-    const loadData = async()=>{
-
-        try{
+        try {
 
             setLoading(true);
+            setError("");
 
 
             const companyResponse =
@@ -38,22 +43,37 @@ export default function SuperAdmin(){
                 await getAnalytics();
 
 
-            setCompanies(
-                companyResponse.data ||
+            const companyData =
+                companyResponse?.data ||
                 companyResponse ||
-                []
+                [];
+
+
+            const analyticsData =
+                analyticsResponse?.data ||
+                analyticsResponse ||
+                {};
+
+
+            setCompanies(
+                Array.isArray(companyData)
+                    ? companyData
+                    : []
             );
 
 
             setAnalytics(
-                analyticsResponse.data ||
-                analyticsResponse ||
-                {}
+                analyticsData
             );
-
 
         }
         catch(err){
+
+            console.error(
+                "SUPER ADMIN LOAD ERROR:",
+                err
+            );
+
 
             setError(
                 "Failed to load super admin data"
@@ -69,58 +89,102 @@ export default function SuperAdmin(){
     };
 
 
+    // ===============================
+    // Change Subscription Plan
+    // Basic <-> Premium
+    // ===============================
+
+    const changePlan = async (
+        companyId,
+        currentPlan
+    ) => {
+
+        try {
+
+            setUpdatingId(companyId);
 
 
-    const changePlan = async(id,plan)=>{
+            const newPlan =
+                currentPlan === "Premium"
+                    ? "Basic"
+                    : "Premium";
 
-        try{
 
             await updateSubscription(
-                id,
-                plan
+                companyId,
+                newPlan
             );
 
 
-            loadData();
-
+            // Reload companies + analytics
+            // after successful update
+            await loadData();
 
         }
         catch(err){
 
+            console.error(
+                "SUBSCRIPTION UPDATE ERROR:",
+                err.response?.data || err
+            );
+
+
             alert(
+                err.response?.data?.message ||
                 "Subscription update failed"
             );
+
+        }
+        finally{
+
+            setUpdatingId(null);
 
         }
 
     };
 
 
-
+    // ===============================
+    // Loading State
+    // ===============================
 
     if(loading){
 
         return (
+
             <div className="module4-card">
+
                 Loading super admin panel...
+
             </div>
+
         );
 
     }
 
 
+    // ===============================
+    // Error State
+    // ===============================
 
     if(error){
 
         return (
+
             <div className="module4-error">
+
                 {error}
+
             </div>
+
         );
 
     }
 
 
+    // ===============================
+    // Main UI
+    // ===============================
 
     return (
 
@@ -132,6 +196,16 @@ export default function SuperAdmin(){
             </h2>
 
 
+            <p className="module4-muted">
+                Monitor companies, subscription plans,
+                and system usage.
+            </p>
+
+
+            {/* ===============================
+                Analytics Cards
+            =============================== */}
+
             <div className="module4-stats">
 
 
@@ -142,21 +216,42 @@ export default function SuperAdmin(){
                     </h3>
 
                     <p>
-                        {analytics.totalCompanies || 0}
+                        {
+                            analytics.totalCompanies
+                            ?? 0
+                        }
                     </p>
 
                 </div>
 
 
+                <div className="module4-stat-card">
+
+                    <h3>
+                        Active Users
+                    </h3>
+
+                    <p>
+                        {
+                            analytics.activeUsers
+                            ?? 0
+                        }
+                    </p>
+
+                </div>
+
 
                 <div className="module4-stat-card">
 
                     <h3>
-                        Usage
+                        Premium Companies
                     </h3>
 
                     <p>
-                        {analytics.activeUsers || 0}
+                        {
+                            analytics.premiumCompanies
+                            ?? 0
+                        }
                     </p>
 
                 </div>
@@ -165,16 +260,20 @@ export default function SuperAdmin(){
             </div>
 
 
+            {/* ===============================
+                Registered Companies
+            =============================== */}
 
             <h3>
                 Registered Companies
             </h3>
 
 
-
             <div className="module4-table-wrapper">
 
+
                 <table className="module4-table">
+
 
                     <thead>
 
@@ -189,7 +288,7 @@ export default function SuperAdmin(){
                             </th>
 
                             <th>
-                                Override
+                                Action
                             </th>
 
                         </tr>
@@ -199,53 +298,123 @@ export default function SuperAdmin(){
 
                     <tbody>
 
+
                     {
-                        companies.length === 0 ?
+                        companies.length === 0
+                        ?
 
                         <tr>
+
                             <td colSpan="3">
+
                                 No companies found
+
                             </td>
+
                         </tr>
 
                         :
 
-                        companies.map(company=>(
+                        companies.map(
+                            (company) => {
 
-                            <tr key={company._id}>
-
-                                <td>
-                                    {company.name}
-                                </td>
-
-
-                                <td>
-                                    {
+                                const currentPlan =
                                     company.subscription ||
-                                    "Basic"
-                                    }
-                                </td>
+                                    "Basic";
 
 
-                                <td>
+                                const isPremium =
+                                    currentPlan ===
+                                    "Premium";
 
-                                    <button
-                                    onClick={()=>
-                                        changePlan(
-                                            company._id,
-                                            "Premium"
-                                        )
-                                    }
+
+                                const isUpdating =
+                                    updatingId ===
+                                    company._id;
+
+
+                                return (
+
+                                    <tr
+                                        key={
+                                            company._id
+                                        }
                                     >
-                                        Upgrade Premium
-                                    </button>
-
-                                </td>
 
 
-                            </tr>
+                                        <td>
 
-                        ))
+                                            {
+                                                company.name
+                                                ||
+                                                "Unnamed Company"
+                                            }
+
+                                        </td>
+
+
+                                        <td>
+
+                                            {
+                                                currentPlan
+                                            }
+
+                                        </td>
+
+
+                                        <td>
+
+
+                                            <button
+
+                                                disabled={
+                                                    isUpdating
+                                                }
+
+                                                onClick={
+                                                    () =>
+                                                        changePlan(
+                                                            company._id,
+                                                            currentPlan
+                                                        )
+                                                }
+
+                                            >
+
+
+                                                {
+                                                    isUpdating
+
+                                                    ?
+
+                                                    "Updating..."
+
+                                                    :
+
+                                                    isPremium
+
+                                                    ?
+
+                                                    "Downgrade Basic"
+
+                                                    :
+
+                                                    "Upgrade Premium"
+                                                }
+
+
+                                            </button>
+
+
+                                        </td>
+
+
+                                    </tr>
+
+                                );
+
+                            }
+                        )
                     }
 
 
@@ -253,6 +422,7 @@ export default function SuperAdmin(){
 
 
                 </table>
+
 
             </div>
 
