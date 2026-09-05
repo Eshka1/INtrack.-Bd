@@ -1,0 +1,334 @@
+{
+  "tenants": [
+    {
+      "name": "farhan",
+      "email": "admin@gmail.com",
+      "subscription": "Basic",
+      "_id": "tenants-1788617354678-jf55l6",
+      "createdAt": "2026-09-05T14:09:14.678Z"
+    },
+    {
+      "name": "farhantrades",
+      "email": "farhan@gmail.com",
+      "subscription": "Premium",
+      "_id": "tenants-1788616958563-ri0e9x",
+      "createdAt": "2026-09-05T14:02:38.563Z"
+    },
+    {
+      "_id": "64b000000000000000000001",
+      "name": "Farhan Trading Ltd",
+      "email": "admin@farhantrading.demo",
+      "subscription": "Enterprise",
+      "createdAt": "2026-09-01T09:00:00.000Z",
+      "updatedAt": "2026-09-05T12:10:03.025Z"
+    },
+    {
+      "_id": "64b000000000000000000003",
+      "name": "ABC Inventory Ltd",
+      "email": "admin@abcinventory.demo",
+      "subscription": "Premium",
+      "createdAt": "2026-09-02T10:00:00.000Z",
+      "updatedAt": "2026-09-05T12:10:07.205Z"
+    }
+  ],
+  "auditlogs": [
+    {
+      "tenantId": "64b000000000000000000001",
+      "userId": "64b000000000000000000002",
+      "userName": "Farhan Ahmed",
+      "entity": "Inventory",
+      "action": "UPDATE",
+      "recordRef": "ijebfjfbebf",
+      "reason": "weokfndenfea",
+      "oldValue": {
+        "quantity": 11
+      },
+      "newValue": {
+        "quantity": 24
+      },
+      "_id": "auditlogs-1788617449866-4v1w0u",
+      "createdAt": "2026-09-05T14:10:49.866Z"
+    },
+    {
+      "tenantId": "64b000000000000000000001",
+      "userId": "64b000000000000000000002",
+      "userName": "Farhan Ahmed",
+      "entity": "Subscription",
+      "action": "CREATE",
+      "recordRef": "farhan",
+      "reason": "Super admin registered a new company",
+      "oldValue": null,
+      "newValue": {
+        "company": "farhan",
+        "email": "admin@gmail.com",
+        "plan": "Basic"
+      },
+      "_id": "auditlogs-1788617354681-gweial",
+      "createdAt": "2026-09-05T14:09:14.681Z"
+    },
+    {
+      "tenantId": "64b000000000000000000001",
+      "userId": "64b000000000000000000002",
+      "userName": "Farhan Ahmed",
+      "entity": "Subscription",
+      "action": "CREATE",
+      "recordRef": "farhantrades",
+      "reason": "Super admin registered a new company",
+      "oldValue": null,
+      "newValue": {
+        "company": "farhantrades",
+        "email": "farhan@gmail.com",
+        "plan": "Premium"
+      },
+      "_id": "auditlogs-1788616958568-b1rvh8",
+      "createdAt": "2026-09-05T14:02:38.568Z"
+    },
+    {
+      "tenantId": "64b000000000000000000001",
+      "userId": "64b000000000000000000002",
+      "userName": "Farhan Ahmed",
+      "entity": "Inventory",
+      "action": "DELETE",
+      "recordRef": "NEFInpof",
+      "reason": "FVERGERGERQGERV",
+      "oldValue": {
+        "quantity": 10
+      },
+      "newValue": {
+        "quantity": 25
+      },
+      "_id": "auditlogs-1788610248448-iy6uxd",
+      "createdAt": "2026-09-05T12:10:48.448Z"
+    },
+    {
+      "tenantId": "64b000000000000000000001",
+      "userId": "64b000000000000000000002",
+      "userName": "Farhan Ahmed",
+      "entity": "Subscription",
+      "action": "UPDATE",
+      "recordRef": "ABC Inventory Ltd",
+      "reason": "Super admin changed company subscription from Basic to Premium",
+      "oldValue": {
+        "plan": "Basic"
+      },
+      "newValue": {
+        "plan": "Premium"
+      },
+      "_id": "auditlogs-1788610207208-h8iktd",
+      "createdAt": "2026-09-05T12:10:07.208Z"
+    },
+    {
+      "tenantId": "64b000000000000000000001",
+      "userId": "64b000000000000000000002",
+      "userName": "Farhan Ahmed",
+      "entity": "Subscription",
+      "action": "UPDATE",
+      "recordRef": "Farhan Trading Ltd",
+      "reason": "Super admin changed company subscription from Premium to Enterprise",
+      "oldValue": {
+        "plan": "Premium"
+      },
+      "newValue": {
+        "plan": "Enterprise"
+      },
+      "_id": "auditlogs-1788610203027-m3z783",
+      "createdAt": "2026-09-05T12:10:03.027Z"
+    },
+    {
+      "_id": "audit-demo-001",
+      "tenantId": "64b000000000000000000001",
+      "userId": "64b000000000000000000002",
+      "userName": "Farhan Ahmed",
+      "entity": "Inventory",
+      "action": "UPDATE",
+      "recordRef": "SKU-1001",
+      "reason": "Physical stock count correction",
+      "oldValue": {
+        "quantity": 10
+      },
+      "newValue": {
+        "quantity": 25
+      },
+      "createdAt": "2026-09-04T14:00:00.000Z"
+    }
+  ],
+  "notifications": [
+    {
+      "tenantId": "64b000000000000000000001",
+      "type": "AUDIT_CHANGE",
+      "title": "Inventory update",
+      "message": "Farhan Ahmed changed Inventory ijebfjfbebf.",
+      "actorId": "64b000000000000000000002",
+      "actorName": "Farhan Ahmed",
+      "entity": "Inventory",
+      "action": "UPDATE",
+      "recordRef": "ijebfjfbebf",
+      "changes": [
+        {
+          "key": "quantity",
+          "before": 11,
+          "after": 24
+        }
+      ],
+      "isRead": false,
+      "_id": "notifications-1788617449878-jvj2o2",
+      "createdAt": "2026-09-05T14:10:49.878Z"
+    },
+    {
+      "tenantId": "64b000000000000000000001",
+      "type": "COMPANY_CREATED",
+      "title": "New company registered",
+      "message": "Farhan Ahmed added farhan with Basic plan.",
+      "actorId": "64b000000000000000000002",
+      "actorName": "Farhan Ahmed",
+      "entity": "Subscription",
+      "action": "CREATE",
+      "recordRef": "farhan",
+      "changes": [
+        {
+          "key": "company",
+          "before": null,
+          "after": "farhan"
+        },
+        {
+          "key": "plan",
+          "before": null,
+          "after": "Basic"
+        }
+      ],
+      "isRead": false,
+      "_id": "notifications-1788617354685-vthm09",
+      "createdAt": "2026-09-05T14:09:14.685Z"
+    },
+    {
+      "tenantId": "64b000000000000000000001",
+      "type": "COMPANY_CREATED",
+      "title": "New company registered",
+      "message": "Farhan Ahmed added farhantrades with Premium plan.",
+      "actorId": "64b000000000000000000002",
+      "actorName": "Farhan Ahmed",
+      "entity": "Subscription",
+      "action": "CREATE",
+      "recordRef": "farhantrades",
+      "changes": [
+        {
+          "key": "company",
+          "before": null,
+          "after": "farhantrades"
+        },
+        {
+          "key": "plan",
+          "before": null,
+          "after": "Premium"
+        }
+      ],
+      "isRead": false,
+      "_id": "notifications-1788616958572-a2sbur",
+      "createdAt": "2026-09-05T14:02:38.572Z"
+    },
+    {
+      "tenantId": "64b000000000000000000001",
+      "type": "AUDIT_CHANGE",
+      "title": "Inventory delete",
+      "message": "Farhan Ahmed changed Inventory NEFInpof.",
+      "actorId": "64b000000000000000000002",
+      "actorName": "Farhan Ahmed",
+      "entity": "Inventory",
+      "action": "DELETE",
+      "recordRef": "NEFInpof",
+      "changes": [
+        {
+          "key": "quantity",
+          "before": 10,
+          "after": 25
+        }
+      ],
+      "isRead": false,
+      "_id": "notifications-1788610248453-q4bow9",
+      "createdAt": "2026-09-05T12:10:48.453Z"
+    },
+    {
+      "tenantId": "64b000000000000000000001",
+      "type": "SUBSCRIPTION_CHANGE",
+      "title": "Subscription changed",
+      "message": "Farhan Ahmed changed ABC Inventory Ltd from Basic to Premium.",
+      "actorId": "64b000000000000000000002",
+      "actorName": "Farhan Ahmed",
+      "entity": "Subscription",
+      "action": "UPDATE",
+      "recordRef": "ABC Inventory Ltd",
+      "changes": [
+        {
+          "key": "plan",
+          "before": "Basic",
+          "after": "Premium"
+        }
+      ],
+      "isRead": false,
+      "_id": "notifications-1788610207210-9fody8",
+      "createdAt": "2026-09-05T12:10:07.210Z"
+    },
+    {
+      "tenantId": "64b000000000000000000001",
+      "type": "SUBSCRIPTION_CHANGE",
+      "title": "Subscription changed",
+      "message": "Farhan Ahmed changed Farhan Trading Ltd from Premium to Enterprise.",
+      "actorId": "64b000000000000000000002",
+      "actorName": "Farhan Ahmed",
+      "entity": "Subscription",
+      "action": "UPDATE",
+      "recordRef": "Farhan Trading Ltd",
+      "changes": [
+        {
+          "key": "plan",
+          "before": "Premium",
+          "after": "Enterprise"
+        }
+      ],
+      "isRead": false,
+      "_id": "notifications-1788610203029-2zrruu",
+      "createdAt": "2026-09-05T12:10:03.029Z"
+    },
+    {
+      "_id": "notif-demo-001",
+      "tenantId": "64b000000000000000000001",
+      "type": "AUDIT_CHANGE",
+      "title": "Inventory updated",
+      "message": "Farhan Ahmed updated Inventory SKU-1001.",
+      "actorId": "64b000000000000000000002",
+      "actorName": "Farhan Ahmed",
+      "entity": "Inventory",
+      "action": "UPDATE",
+      "recordRef": "SKU-1001",
+      "changes": [
+        {
+          "key": "quantity",
+          "before": 10,
+          "after": 25
+        }
+      ],
+      "isRead": false,
+      "createdAt": "2026-09-04T14:00:00.000Z"
+    }
+  ],
+  "activitylogs": [
+    {
+      "tenantId": "64b000000000000000000001",
+      "userId": "64b000000000000000000002",
+      "entity": "Inventory",
+      "action": "UPDATE",
+      "recordRef": "ijebfjfbebf",
+      "_id": "activitylogs-1788617449872-e8tkxo",
+      "createdAt": "2026-09-05T14:10:49.872Z"
+    },
+    {
+      "tenantId": "64b000000000000000000001",
+      "userId": "64b000000000000000000002",
+      "entity": "Inventory",
+      "action": "DELETE",
+      "recordRef": "NEFInpof",
+      "_id": "activitylogs-1788610248451-rnuigj",
+      "createdAt": "2026-09-05T12:10:48.451Z"
+    }
+  ]
+}
