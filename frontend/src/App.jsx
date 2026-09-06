@@ -8,7 +8,6 @@ import PayablesPage from "./pages/PayablesPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import FinanceDashboard from "./pages/FinanceDashboard";
 import CurrencySettingsPage from "./pages/CurrencySettingsPage";
-import Module4Page from "./pages/Module4Page";
 
 function App() {
   return (
@@ -28,7 +27,6 @@ function App() {
           <Route path="/finance/payables" element={<PayablesPage />} />
           <Route path="/finance/analytics" element={<AnalyticsPage />} />
           <Route path="/finance/settings" element={<CurrencySettingsPage />} />
-          <Route path="/module4" element={<Module4Page />} />
         </Routes>
       </div>
     </Router>

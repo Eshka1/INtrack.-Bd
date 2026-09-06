@@ -19,7 +19,6 @@ const assetCategoryRoutes = require('./routes/assetCategoryRoutes');
 const warehouseRoutes = require('./routes/warehouseRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const financeRoutes = require('./src/modules/finance/routes/financeRoutes');
-const module4Routes = require('./src/modules/module4/routes');
 
 /**
  * This file builds and exports the Express `app` only — no DB connection,
@@ -36,15 +35,8 @@ const app = express();
 app.use(helmet());
 
 // CORS - restrict to the frontend origin
-const configuredOrigin = process.env.CLIENT_URL || process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || origin === configuredOrigin) return callback(null, true);
-    if (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error(`CORS blocked origin: ${origin}`));
-  },
+  origin: process.env.CLIENT_URL || process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
   credentials: true
 }));
 
@@ -68,11 +60,7 @@ app.use('/api/auth/register-company', authLimiter);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'IN-Track API is running',
-    databaseMode: req.app.locals.databaseMode || 'starting'
-  });
+  res.status(200).json({ success: true, message: 'IN-Track API is running' });
 });
 
 // Routes
@@ -90,10 +78,6 @@ app.use('/api/finance', (req, res, next) => {
   }
   next();
 }, financeRoutes);
-// Module 4 is part of the authenticated team application. Always resolve
-// the logged-in user/tenant first; local development fallback users are
-// handled by protect() just like MongoDB-backed users.
-app.use('/api/module4', protect, module4Routes);
 
 // 404 handler
 app.use((req, res) => {
