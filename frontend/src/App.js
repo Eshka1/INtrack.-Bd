@@ -11,6 +11,13 @@ import AcceptInvite from './pages/AcceptInvite';
 import AssetCategories from './pages/AssetCategories';
 import Warehouses from './pages/Warehouses';
 import Billing from './pages/Billing';
+import FinanceDashboard from './pages/FinanceDashboard';
+import BudgetPage from './pages/BudgetPage';
+import ExpensesPage from './pages/ExpensesPage';
+import ExpenseCreatePage from './pages/ExpenseCreatePage';
+import PayablesPage from './pages/PayablesPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import CurrencySettingsPage from './pages/CurrencySettingsPage';
 
 import './App.css';
 
@@ -59,6 +66,62 @@ function App() {
             element={
               <ProtectedRoute>
                 <Billing />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance"
+            element={
+              <ProtectedRoute>
+                <FinanceDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/budget"
+            element={
+              <ProtectedRoute>
+                <BudgetPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/expenses"
+            element={
+              <ProtectedRoute>
+                <ExpensesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/expenses/new"
+            element={
+              <ProtectedRoute>
+                <ExpenseCreatePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/payables"
+            element={
+              <ProtectedRoute>
+                <PayablesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/analytics"
+            element={
+              <ProtectedRoute>
+                <AnalyticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/currency"
+            element={
+              <ProtectedRoute>
+                <CurrencySettingsPage />
               </ProtectedRoute>
             }
           />

@@ -84,7 +84,7 @@ const ExpenseCreatePage = () => {
       setFormData(initialForm);
     } catch (err) {
       console.error("CREATE EXPENSE ERROR:", err);
-      const backendMsg = err.response?.data?.message;
+      const backendMsg = err.response?.data?.error || err.response?.data?.message;
       setError(backendMsg || "Failed to create expense.");
     } finally {
       setLoading(false);
