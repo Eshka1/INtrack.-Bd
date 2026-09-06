@@ -8,6 +8,7 @@ import ManufacturingRunModal from '../components/module2/ManufacturingRunModal';
 import LowStockAlertBanner from '../components/module2/LowStockAlertBanner';
 import { module2Api } from '../services/module2Api';
 import { warehouseService } from '../services/warehouseService';
+import { getCurrencySettings } from '../services/financeApi';
 import '../styles/module2.css';
 
 const inventoryForUi = (items = []) => items.map((item) => ({
@@ -46,13 +47,14 @@ export default function OperationsDashboard() {
   const [suppliers, setSuppliers] = useState([]);
   const [recipes, setRecipes] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
+  const [displayCurrency, setDisplayCurrency] = useState('BDT');
 
   const refresh = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const [inventoryResult, supplierResult, recipeResult, warehouseResult] = await Promise.all([
-        module2Api.getInventory(), module2Api.getSuppliers(), module2Api.getRecipes(), warehouseService.getWarehouses()
+      const [inventoryResult, supplierResult, recipeResult, warehouseResult, currencyResult] = await Promise.all([
+        module2Api.getInventory(), module2Api.getSuppliers(), module2Api.getRecipes(), warehouseService.getWarehouses(), getCurrencySettings()
       ]);
       setInventory(inventoryForUi(inventoryResult.inventory));
       setSuppliers(supplierResult);
@@ -69,6 +71,7 @@ export default function OperationsDashboard() {
           unit: item.unitOfMeasure
         }))
       })));
+      setDisplayCurrency(currencyResult.data.data.displayCurrency || 'BDT');
     } catch (requestError) {
       setError(requestError.response?.data?.error || 'Unable to load inventory operations.');
     } finally {
@@ -79,11 +82,11 @@ export default function OperationsDashboard() {
   useEffect(() => { refresh(); }, [refresh]);
 
   const addSupplier = async (payload) => {
-    const saved = await module2Api.createSupplier(payload);
+    const saved = await module2Api.createSupplier({ ...payload, products: payload.products.map((product) => ({ ...product, currency: product.currency || displayCurrency })) });
     setSuppliers((current) => [saved, ...current]);
   };
   const updateSupplier = async (id, payload) => {
-    const updated = await module2Api.updateSupplier(id, payload);
+    const updated = await module2Api.updateSupplier(id, { ...payload, products: payload.products.map((product) => ({ ...product, currency: product.currency || displayCurrency })) });
     setSuppliers((current) => current.map((supplier) => supplier._id === id ? updated : supplier));
   };
   const deleteSupplier = async (id) => {
@@ -113,9 +116,10 @@ export default function OperationsDashboard() {
       poNumber: `PO-${Date.now()}`,
       supplierId: payload.supplierId,
       warehouseId: payload.warehouseId,
+      currency: payload.currency,
       items: [{ itemName: payload.productName, sku: payload.sku, orderedQuantity: payload.quantityReceived, unitCost: payload.unitCost, unitOfMeasure: payload.unit }]
     });
-    await module2Api.ingestShipment(po._id, { receivedItems: [{ sku: payload.sku, quantity: payload.quantityReceived }], verifiedWeight: payload.quantityReceived });
+    await module2Api.ingestShipment(po._id, { receiptReference: window.crypto?.randomUUID?.() || `receipt-${Date.now()}`, receivedItems: [{ sku: payload.sku, quantity: payload.quantityReceived }], verifiedWeight: payload.quantityReceived });
     await refresh();
   };
   const executeRun = async (payload) => {
@@ -144,8 +148,8 @@ export default function OperationsDashboard() {
         {error && <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 flex justify-between"><span><AlertTriangle className="inline w-4 h-4" /> {error}</span><button onClick={refresh}>Retry</button></div>}
         {loading ? <div className="py-20 text-center text-emerald-400"><RefreshCw className="w-8 h-8 animate-spin mx-auto" />Loading operations…</div> : <>
           {activeTab === 'inventory' && <div className="space-y-6"><LowStockAlertBanner inventory={inventory} onQuickRestock={() => setActiveTab('po')} /><div className="module2-inventory-heading flex justify-between items-center bg-emerald-950/40 border border-emerald-500/20 rounded-2xl p-6"><div><h2 className="text-xl font-bold">Raw Material Inventory Ledger</h2><p className="text-sm text-emerald-200/70">Tenant-isolated operational balances.</p></div><button type="button" disabled={recipes.length === 0} title={recipes.length === 0 ? 'Create a BOM recipe before launching production' : undefined} onClick={() => setShowRunModal(true)} className="px-4 py-2 bg-emerald-500 text-black rounded-xl flex gap-2"><PlayCircle className="w-4 h-4" />Launch Production Run</button></div><div className="bg-emerald-950/30 rounded-2xl overflow-x-auto"><table className="w-full text-left"><thead><tr><th>Material</th><th>SKU</th><th>Stock</th><th>Safety target</th><th>Location</th><th>Status</th></tr></thead><tbody>{inventory.map((item) => <tr key={item._id}><td>{item.name}</td><td>{item.sku}</td><td>{item.currentBalance} {item.unit}</td><td>{item.safetyStock} {item.unit}</td><td>{item.location}</td><td>{item.currentBalance <= item.safetyStock ? 'Low Stock' : 'Optimal'}</td></tr>)}</tbody></table>{inventory.length === 0 && <p className="p-8 text-center">No materials yet. Receive a purchase order to add stock.</p>}</div></div>}
-          {activeTab === 'suppliers' && <SupplierDirectory suppliers={suppliers} onAddSupplier={addSupplier} onUpdateSupplier={updateSupplier} onDeleteSupplier={deleteSupplier} />}
-          {activeTab === 'po' && <POIngestionPanel suppliers={suppliers} warehouses={warehouses} onIngestPO={ingestPurchase} />}
+          {activeTab === 'suppliers' && <SupplierDirectory suppliers={suppliers} displayCurrency={displayCurrency} onAddSupplier={addSupplier} onUpdateSupplier={updateSupplier} onDeleteSupplier={deleteSupplier} />}
+          {activeTab === 'po' && <POIngestionPanel suppliers={suppliers} warehouses={warehouses} displayCurrency={displayCurrency} onIngestPO={ingestPurchase} />}
           {activeTab === 'recipes' && <DynamicRecipeBuilder inventory={inventory} recipes={recipes} onAddRecipe={addRecipe} onDeleteRecipe={deleteRecipe} />}
         </>}
       </main>

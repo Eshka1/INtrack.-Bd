@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { formatMoney } from '../../utils/currency';
 import { Users, Plus, Trash2, Mail, Clock, Star, Package, Tag, AlertCircle, Edit3, X, Check } from 'lucide-react';
 import Module2Dialog from './Module2Dialog';
 
-export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSupplier, onDeleteSupplier }) {
+export default function SupplierDirectory({ suppliers, displayCurrency = 'BDT', onAddSupplier, onUpdateSupplier, onDeleteSupplier }) {
   const [showForm, setShowForm] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -38,6 +39,7 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
       name: productInput.name.trim(),
       sku: productInput.sku.trim() || `RAW-${Math.floor(100 + Math.random() * 900)}`,
       unitPrice: Number(productInput.unitPrice) || 0,
+      currency: displayCurrency,
       unit: productInput.unit.trim().toLowerCase() || 'units'
     };
 
@@ -66,6 +68,7 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
         name: productInput.name.trim(),
         sku: productInput.sku.trim() || `RAW-${Math.floor(100 + Math.random() * 900)}`,
         unitPrice: Number(productInput.unitPrice) || 0,
+        currency: displayCurrency,
         unit: productInput.unit.trim().toLowerCase() || 'units'
       });
     }
@@ -111,6 +114,7 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
       name: editProductInput.name.trim(),
       sku: editProductInput.sku.trim() || `RAW-${Math.floor(100 + Math.random() * 900)}`,
       unitPrice: Number(editProductInput.unitPrice) || 0,
+      currency: displayCurrency,
       unit: editProductInput.unit.trim().toLowerCase() || 'units'
     };
 
@@ -147,6 +151,7 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
         name: editProductInput.name.trim(),
         sku: editProductInput.sku.trim() || `RAW-${Math.floor(100 + Math.random() * 900)}`,
         unitPrice: Number(editProductInput.unitPrice) || 0,
+        currency: displayCurrency,
         unit: editProductInput.unit.trim().toLowerCase() || 'units'
       });
     }
@@ -272,7 +277,7 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-[11px] font-semibold text-emerald-400/80 mb-1">Price / Unit ($)</label>
+                <label className="block text-[11px] font-semibold text-emerald-400/80 mb-1">Price / Unit ({displayCurrency})</label>
                 <input
                   type="number"
                   step="0.01"
@@ -307,7 +312,7 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
                     >
                       <Package className="w-3.5 h-3.5 text-emerald-400" />
                       <strong>{p.name}</strong> ({p.sku}) —
-                      <span className="text-emerald-400 font-mono font-bold">${Number(p.unitPrice).toFixed(2)}</span> / {p.unit}
+                      <span className="text-emerald-400 font-mono font-bold">{formatMoney(p.displayUnitPrice ?? p.unitPrice, p.displayCurrency || displayCurrency)}</span> / {p.unit}
                       <button
                         type="button"
                         onClick={() => handleRemovePendingProduct(idx)}
@@ -383,7 +388,7 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
                     s.products.map((p, i) => (
                       <div key={i} className="text-xs px-2.5 py-1 bg-[#071d15] border border-emerald-500/20 rounded-lg text-emerald-200 flex items-center gap-1.5">
                         <span className="font-medium text-white">{p.name}:</span>
-                        <span className="text-emerald-400 font-mono font-bold">${Number(p.unitPrice).toFixed(2)}</span>
+                        <span className="text-emerald-400 font-mono font-bold">{formatMoney(p.displayUnitPrice ?? p.unitPrice, p.displayCurrency || displayCurrency)}</span>
                         <span className="text-emerald-400/70 text-[11px]">/ {p.unit || 'units'}</span>
                       </div>
                     ))
@@ -430,7 +435,7 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
                     >
                       <Package className="w-3.5 h-3.5 text-emerald-400" />
                       <strong>{p.name}</strong> ({p.sku}) —
-                      <span className="text-emerald-400 font-mono font-bold">${Number(p.unitPrice).toFixed(2)}</span> / {p.unit}
+                      <span className="text-emerald-400 font-mono font-bold">{formatMoney(p.displayUnitPrice ?? p.unitPrice, p.displayCurrency || displayCurrency)}</span> / {p.unit}
                       <button
                         type="button"
                         onClick={() => handleRemoveEditProduct(idx)}

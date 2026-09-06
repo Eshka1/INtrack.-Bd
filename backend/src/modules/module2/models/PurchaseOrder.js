@@ -9,6 +9,15 @@ const itemSchema = new mongoose.Schema({
   unitOfMeasure: { type: String, default: 'kg', trim: true }
 }, { _id: false });
 
+const receiptSchema = new mongoose.Schema({
+  receiptReference: { type: String, required: true, trim: true },
+  receivedItems: [{ sku: String, quantity: Number, amount: Number, normalizedAmount: Number }],
+  amount: { type: Number, required: true, min: 0 },
+  normalizedAmount: { type: Number, required: true, min: 0 },
+  receivedAt: { type: Date, default: Date.now },
+  expenseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Expense' }
+}, { _id: false });
+
 const schema = new mongoose.Schema({
   tenantId: { type: String, required: true, index: true },
   poNumber: { type: String, required: true, trim: true },
@@ -17,6 +26,10 @@ const schema = new mongoose.Schema({
   warehouseName: { type: String, default: 'Main Warehouse', trim: true },
   items: { type: [itemSchema], validate: [(items) => items.length > 0, 'At least one item is required'] },
   totalCost: { type: Number, default: 0, min: 0 },
+  currency: { type: String, required: true, default: 'USD', enum: ['BDT', 'USD', 'EUR', 'GBP'], uppercase: true },
+  normalizedTotalCost: { type: Number, default: 0, min: 0 },
+  exchangeRateSnapshot: { type: Number, default: 1, min: 0 },
+  receipts: { type: [receiptSchema], default: [] },
   status: { type: String, enum: ['PENDING', 'PARTIAL', 'RECEIVED', 'CANCELLED'], default: 'PENDING' },
   deliverySlipNumber: { type: String, default: '', trim: true },
   verifiedWeight: { type: Number, default: 0, min: 0 },
@@ -24,4 +37,5 @@ const schema = new mongoose.Schema({
 }, { timestamps: true });
 
 schema.index({ tenantId: 1, poNumber: 1 }, { unique: true });
+schema.index({ tenantId: 1, 'receipts.receiptReference': 1 });
 module.exports = mongoose.model('Module2PurchaseOrder', schema);

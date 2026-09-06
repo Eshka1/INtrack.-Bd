@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Truck, CheckCircle2, DollarSign, Building2, Package, Lock } from 'lucide-react';
+import { currencySymbol, formatMoney } from '../../utils/currency';
 
-export default function POIngestionPanel({ suppliers, warehouses, onIngestPO }) {
+export default function POIngestionPanel({ suppliers, warehouses, displayCurrency = 'BDT', onIngestPO }) {
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantityReceived, setQuantityReceived] = useState('');
@@ -15,7 +16,7 @@ export default function POIngestionPanel({ suppliers, warehouses, onIngestPO }) 
   const supplierProducts = currentSupplier?.products || [];
 
   // Automatically locked unit cost directly derived from supplier catalog
-  const unitCost = Number(selectedProduct?.unitPrice || 0);
+  const unitCost = Number(selectedProduct?.displayUnitPrice ?? selectedProduct?.unitPrice ?? 0);
   const qty = Number(quantityReceived) || 0;
   const totalCost = Number((qty * unitCost).toFixed(2));
 
@@ -48,6 +49,7 @@ export default function POIngestionPanel({ suppliers, warehouses, onIngestPO }) 
         sku: selectedProduct.sku,
         quantityReceived: qty,
         unitCost: unitCost,
+        currency: displayCurrency,
         totalCost: totalCost,
         unit: selectedProduct.unit || 'units',
         warehouseId
@@ -137,7 +139,7 @@ export default function POIngestionPanel({ suppliers, warehouses, onIngestPO }) 
             </option>
             {supplierProducts.map((p, idx) => (
               <option key={idx} value={p.name} className="bg-[#071d15] text-white py-2">
-                {p.name} {p.sku ? `(${p.sku})` : ''} — ${p.unitPrice?.toFixed(2) || '0.00'}/{p.unit || 'unit'}
+                {p.name} {p.sku ? `(${p.sku})` : ''} — {formatMoney(p.displayUnitPrice ?? p.unitPrice, p.displayCurrency || displayCurrency)}/{p.unit || 'unit'}
               </option>
             ))}
           </select>
@@ -179,13 +181,13 @@ export default function POIngestionPanel({ suppliers, warehouses, onIngestPO }) 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-emerald-400 mb-1 flex items-center justify-between">
-              <span>Unit Purchase Cost ($)</span>
+              <span>Unit Purchase Cost ({displayCurrency})</span>
               <span className="text-[10px] text-emerald-400/60 flex items-center gap-1">
                 <Lock className="w-3 h-3" /> Locked to Supplier Rate
               </span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-emerald-400 text-xs">$</span>
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-emerald-400 text-xs">{currencySymbol(displayCurrency)}</span>
               <input
                 type="text"
                 readOnly
@@ -216,11 +218,11 @@ export default function POIngestionPanel({ suppliers, warehouses, onIngestPO }) 
             <div className="flex items-center gap-2 text-emerald-300 text-xs">
               <DollarSign className="w-4 h-4 text-emerald-400" />
               <span>
-                Calculated Total Order Cost ({qty} {selectedProduct.unit || 'units'} @ ${unitCost.toFixed(2)}):
+                Calculated Total Order Cost ({qty} {selectedProduct.unit || 'units'} @ {formatMoney(unitCost, displayCurrency)}):
               </span>
             </div>
             <span className="text-base font-bold text-white font-mono">
-              ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatMoney(totalCost, displayCurrency)}
             </span>
           </div>
         )}

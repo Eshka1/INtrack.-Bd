@@ -199,7 +199,7 @@ const ExpensesPage = () => {
                       <td className="py-2 pr-4">{e.category}</td>
                       <td className="py-2 pr-4 text-neuTextMuted">{e.createdByRole}</td>
                       <td className="py-2 pr-4 font-semibold text-neuPrimary">
-                        {e.amount?.toLocaleString()} {e.currency}
+                        {(e.displayAmount ?? e.amount)?.toLocaleString()} {e.displayCurrency || e.currency}
                       </td>
                       <td className="py-2 pr-4 text-right">
                         <button

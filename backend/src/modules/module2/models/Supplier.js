@@ -4,7 +4,8 @@ const productSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   sku: { type: String, required: true, trim: true },
   unit: { type: String, default: 'kg', trim: true },
-  unitPrice: { type: Number, required: true, min: 0 }
+  unitPrice: { type: Number, required: true, min: 0 },
+  currency: { type: String, required: true, default: 'USD', enum: ['BDT', 'USD', 'EUR', 'GBP'], uppercase: true, trim: true }
 }, { _id: false });
 
 const supplierSchema = new mongoose.Schema({

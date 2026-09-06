@@ -1,6 +1,7 @@
 const budgetRepo = require('../repositories/budgetRepository');
 const { getCompanyRates } = require('./currencyService');
 const { convertCurrency, roundMoney } = require('../utils/money');
+const { getDisplayContext, displayFromNormalized, presentBudget } = require('./moneyPresentationService');
 
 class BudgetNotFoundError extends Error {
   constructor(message = 'Operational budget not found') {
@@ -55,8 +56,9 @@ async function listBudgets(companyId, query = {}) {
     budgetRepo.countBudgets(filter)
   ]);
 
+  const display = await getDisplayContext(companyId, query.currency);
   return {
-    budgets,
+    budgets: budgets.map((item) => presentBudget(item, display)),
     meta: {
       page,
       pageSize,
@@ -112,8 +114,14 @@ async function deleteBudget(companyId, budgetId) {
   return deleted;
 }
 
-async function getBudgetSummary(companyId) {
-  return await budgetRepo.getBudgetSummaryAggregation(companyId);
+async function getBudgetSummary(companyId, currency) {
+  const [summary, display] = await Promise.all([budgetRepo.getBudgetSummaryAggregation(companyId), getDisplayContext(companyId, currency)]);
+  return {
+    ...summary,
+    totalMonthlyBudget: displayFromNormalized(summary.totalMonthlyBudget, display),
+    currency: display.displayCurrency,
+    categoryTotals: Object.fromEntries(Object.entries(summary.categoryTotals).map(([category, amount]) => [category, displayFromNormalized(amount, display)]))
+  };
 }
 
 module.exports = {

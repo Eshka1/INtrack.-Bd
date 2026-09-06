@@ -70,7 +70,10 @@ const expenseSchema = new mongoose.Schema(
     notes: {
       type: String,
       default: ''
-    }
+    },
+    sourceType: { type: String, default: 'manual', trim: true },
+    sourceId: { type: String, default: null },
+    sourceReference: { type: String, default: null }
   },
   {
     timestamps: true
@@ -80,6 +83,10 @@ const expenseSchema = new mongoose.Schema(
 expenseSchema.index({ companyId: 1, expenseDate: -1 });
 expenseSchema.index({ companyId: 1, category: 1, expenseDate: -1 });
 expenseSchema.index({ companyId: 1, createdByRole: 1, expenseDate: -1 });
+expenseSchema.index(
+  { companyId: 1, sourceType: 1, sourceReference: 1 },
+  { unique: true, partialFilterExpression: { sourceReference: { $type: 'string' } } }
+);
 
 const Expense = mongoose.model('Expense', expenseSchema);
 

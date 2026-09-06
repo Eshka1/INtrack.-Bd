@@ -140,7 +140,7 @@ const FinanceDashboard = () => {
             >
               <span className="text-neuTextDark font-medium">{item.title}</span>
               <span className="text-neuPrimary font-semibold">
-                {item.amount?.toLocaleString()} {item.currency}
+                {(item.displayAmount ?? item.amount)?.toLocaleString()} {item.displayCurrency || item.currency}
               </span>
             </div>
           ))}
@@ -166,7 +166,7 @@ const FinanceDashboard = () => {
                 <p className="text-xs text-neuTextMuted">{p.invoiceNumber}</p>
               </div>
               <span className="text-neuPrimary font-semibold">
-                {p.outstandingAmount?.toLocaleString()} {p.currency}
+                {(p.displayOutstandingAmount ?? p.outstandingAmount)?.toLocaleString()} {p.displayCurrency || p.currency}
               </span>
             </div>
           ))}
