@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AlertTriangle, Boxes, BookOpen, Layers, PlayCircle, RefreshCw, Truck, Users } from 'lucide-react';
 import SupplierDirectory from '../components/module2/SupplierDirectory';
 import POIngestionPanel from '../components/module2/POIngestionPanel';
@@ -112,7 +113,7 @@ export default function OperationsDashboard() {
     <div className="module2-shell min-h-screen bg-[#06130e] text-emerald-100 font-sans">
       <header className="sticky top-0 z-40 bg-[#06130e]/80 border-b border-emerald-500/20 px-6 py-4">
         <div className="module2-header-inner max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3"><Layers className="w-7 h-7 text-emerald-400" /><div><h1 className="text-xl font-bold text-white">INtrack <span className="text-xs text-emerald-400">Module 2</span></h1><p className="text-xs text-emerald-300/70">Inventory & Manufacturing Operations Engine</p></div></div>
+          <Link to="/dashboard" className="module2-brand-link flex items-center gap-3" aria-label="Return to dashboard"><Layers className="w-7 h-7 text-emerald-400" /><div><h1 className="text-xl font-bold text-white">INtrack <span className="text-xs text-emerald-400">Module 2</span></h1><p className="text-xs text-emerald-300/70">Inventory & Manufacturing Operations Engine</p></div></Link>
           <nav className="module2-taskbar flex items-center gap-2" aria-label="Operations sections">
             {tabs.map(([id, Icon, label]) => <button key={id} type="button" aria-pressed={activeTab === id} onClick={() => setActiveTab(id)} className={`module2-taskbar-button flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold ${activeTab === id ? 'bg-emerald-500 text-black' : 'bg-emerald-950 text-emerald-300'}`}><Icon className="w-4 h-4" />{label}</button>)}
           </nav>

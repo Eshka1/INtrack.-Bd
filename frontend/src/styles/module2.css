@@ -12,6 +12,9 @@
 .module2-shell h1, .module2-shell h2, .module2-shell h3, .module2-shell h4, .module2-shell p { margin-top: 0; }
 .module2-shell button, .module2-shell input, .module2-shell select, .module2-shell textarea { font: inherit; }
 .module2-shell button { width: auto; }
+.module2-brand-link { color: inherit; text-decoration: none; border-radius: .75rem; }
+.module2-brand-link:hover h1, .module2-brand-link:focus-visible h1 { color: #6ee7b7; }
+.module2-brand-link:focus-visible { outline: 2px solid #6ee7b7; outline-offset: 4px; }
 .module2-shell button:focus-visible, .module2-shell input:focus-visible, .module2-shell select:focus-visible, .module2-shell textarea:focus-visible {
   outline: 2px solid #6ee7b7;
   outline-offset: 2px;
