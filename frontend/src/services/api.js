@@ -1,5 +1,38 @@
-const API_BASE_URL = 'http://localhost:5002/api/v1/module2';
+import axios from 'axios';
 
+// Vite environment variable fallback to standard relative proxy path
+const API_BASE_URL = import.meta.env?.VITE_API_URL || '/api';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: { 'Content-Type': 'application/json' }
+});
+
+// Attaches the JWT to every outgoing request for tenant isolation
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('intrack_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Global response handler: on 401 (expired/invalid token), clear session
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('intrack_token');
+      localStorage.removeItem('intrack_user');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Module 2 Mock Data Fixture (retained for testing, seeding, or demo fallback)
 export const initialMockData = {
   suppliers: [
     {
@@ -25,8 +58,8 @@ export const initialMockData = {
   ],
   inventory: [
     { _id: 'raw_1', itemName: 'Raw Cotton Twill (Navy)', sku: 'RAW-COT-01', unitOfMeasure: 'meters', currentQuantity: 145.5, safetyStockThreshold: 40.0 },
-    { _id: 'raw_2', itemName: 'Poly Thread 500m Spool', sku: 'RAW-THR-02', unitOfMeasure: 'spools', currentQuantity: 6.0, safetyStockThreshold: 15.0 }, // Low Stock!
-    { _id: 'raw_3', itemName: 'Brass Snap Buttons', sku: 'RAW-BTN-03', unitOfMeasure: 'pieces', currentQuantity: 28.0, safetyStockThreshold: 50.0 }, // Low Stock!
+    { _id: 'raw_2', itemName: 'Poly Thread 500m Spool', sku: 'RAW-THR-02', unitOfMeasure: 'spools', currentQuantity: 6.0, safetyStockThreshold: 15.0 },
+    { _id: 'raw_3', itemName: 'Brass Snap Buttons', sku: 'RAW-BTN-03', unitOfMeasure: 'pieces', currentQuantity: 28.0, safetyStockThreshold: 50.0 },
     { _id: 'raw_4', itemName: 'Organic Bamboo Viscose', sku: 'RAW-BAM-04', unitOfMeasure: 'meters', currentQuantity: 82.0, safetyStockThreshold: 20.0 },
   ],
   recipes: [
@@ -57,3 +90,5 @@ export const initialMockData = {
     },
   ],
 };
+
+export default api;

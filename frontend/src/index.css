@@ -1,9 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+:root {
+  --neu-bg: #0d1310;
+  --neu-card: #141b18;
+  --neu-border: rgba(255, 255, 255, 0.08);
+  --neu-glow: rgba(52, 211, 153, 0.15);
+}
 
+body {
+  margin: 0;
+  background-color: var(--neu-bg);
+  color: #f3f5f4;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Module 2 Glassmorphism Utilities */
 @layer utilities {
   .glass-panel {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(18, 50, 39, 0.45) 100%);
@@ -26,6 +41,7 @@
     color: #f0fdf4;
     transition: all 0.2s ease;
   }
+
   .glass-input:focus {
     border-color: #6ee7b7;
     box-shadow: 0 0 15px rgba(110, 231, 183, 0.2);
@@ -33,10 +49,74 @@
   }
 }
 
-body {
-  margin: 0;
-  background-color: #06130e;
-  color: #ecfdf5;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  overflow-x: hidden;
+/* Modules 1 & 3 Neomorphic Components */
+@layer components {
+  .neu-raised {
+    border-radius: 18px;
+    background-color: var(--neu-card);
+    border: 1px solid var(--neu-border);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  .neu-inset {
+    border-radius: 14px;
+    background-color: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--neu-border);
+  }
+
+  .neu-capsule {
+    border-radius: 999px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--neu-border);
+  }
+
+  .neu-capsule:focus-within {
+    border-color: #34d399;
+    box-shadow: 0 0 0 3px var(--neu-glow);
+  }
+
+  .neu-btn-solid {
+    border-radius: 999px;
+    background-color: rgba(52, 211, 153, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.35);
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .neu-btn-solid:hover:not(:disabled) {
+    background-color: rgba(52, 211, 153, 0.2);
+    box-shadow: 0 0 0 3px var(--neu-glow);
+  }
+
+  .neu-btn-solid:active:not(:disabled) {
+    background-color: rgba(52, 211, 153, 0.28);
+  }
+
+  .neu-btn-danger {
+    border-radius: 999px;
+    background-color: rgba(248, 113, 113, 0.12);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    transition: background-color 0.15s ease;
+  }
+
+  .neu-btn-danger:hover:not(:disabled) {
+    background-color: rgba(248, 113, 113, 0.2);
+  }
+}
+
+/* Style native dropdown options for dark theme */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #141b18;
+  color: #f3f5f4;
+}
+
+select option:checked,
+select option:hover {
+  background-color: #1c2622;
+  color: #34d399;
 }
