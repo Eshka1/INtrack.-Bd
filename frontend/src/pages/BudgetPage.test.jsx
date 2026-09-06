@@ -1,14 +1,13 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { vi } from "vitest";
 import BudgetPage from "./BudgetPage";
 import { getBudgets, createBudget, updateBudget } from "../services/financeApi";
 
-vi.mock("../services/financeApi");
+jest.mock("../services/financeApi");
 
 describe("BudgetPage Component", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   test("shows loading state on mount", async () => {

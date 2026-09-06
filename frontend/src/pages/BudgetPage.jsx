@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getBudgets, createBudget, updateBudget } from "../services/financeApi";
+import { getBudgets, createBudget, updateBudget, deleteBudget } from "../services/financeApi";
 import NeuCard from "../components/ui/NeuCard";
 import NeuInput from "../components/ui/NeuInput";
 import NeuButton from "../components/ui/NeuButton";
@@ -85,6 +85,25 @@ const BudgetPage = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!budgetId || !window.confirm("Delete this budget?")) return;
+    setLoading(true);
+    setError(null);
+    setSuccessMsg("");
+    try {
+      await deleteBudget(budgetId);
+      setBudgetId(null);
+      setBudgetName("Monthly Budget");
+      setBudgetAmount("");
+      setSuccessMsg("Budget deleted successfully!");
+    } catch (err) {
+      console.error("Delete budget error:", err);
+      setError("Could not delete budget. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (pageLoading) {
     return (
       <div className="max-w-sm mx-auto py-8">
@@ -144,6 +163,11 @@ const BudgetPage = () => {
           <NeuButton className="w-full !mt-6" type="submit" disabled={loading}>
             {loading ? "Saving..." : "Save / Update Budget"}
           </NeuButton>
+          {budgetId && (
+            <NeuButton type="button" onClick={handleDelete} disabled={loading} className="w-full !mt-3 !bg-transparent">
+              Delete Budget
+            </NeuButton>
+          )}
         </form>
       </NeuCard>
     </div>
