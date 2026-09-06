@@ -1,0 +1,61 @@
+{
+  "tenants": [
+    {
+      "_id": "64b000000000000000000001",
+      "name": "Farhan Trading Ltd",
+      "email": "admin@farhantrading.demo",
+      "subscription": "Premium",
+      "createdAt": "2026-09-01T09:00:00.000Z"
+    },
+    {
+      "_id": "64b000000000000000000003",
+      "name": "ABC Inventory Ltd",
+      "email": "admin@abcinventory.demo",
+      "subscription": "Basic",
+      "createdAt": "2026-09-02T10:00:00.000Z"
+    }
+  ],
+  "auditlogs": [
+    {
+      "_id": "audit-demo-001",
+      "tenantId": "64b000000000000000000001",
+      "userId": "64b000000000000000000002",
+      "userName": "Farhan Ahmed",
+      "entity": "Inventory",
+      "action": "UPDATE",
+      "recordRef": "SKU-1001",
+      "reason": "Physical stock count correction",
+      "oldValue": {
+        "quantity": 10
+      },
+      "newValue": {
+        "quantity": 25
+      },
+      "createdAt": "2026-09-04T14:00:00.000Z"
+    }
+  ],
+  "notifications": [
+    {
+      "_id": "notif-demo-001",
+      "tenantId": "64b000000000000000000001",
+      "type": "AUDIT_CHANGE",
+      "title": "Inventory updated",
+      "message": "Farhan Ahmed updated Inventory SKU-1001.",
+      "actorId": "64b000000000000000000002",
+      "actorName": "Farhan Ahmed",
+      "entity": "Inventory",
+      "action": "UPDATE",
+      "recordRef": "SKU-1001",
+      "changes": [
+        {
+          "key": "quantity",
+          "before": 10,
+          "after": 25
+        }
+      ],
+      "isRead": false,
+      "createdAt": "2026-09-04T14:00:00.000Z"
+    }
+  ],
+  "activitylogs": []
+}
