@@ -84,94 +84,101 @@ const PayablesPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-bold text-neuPrimary">Accounts Payable Aging Ledger</h2>
-
-      {error && <NeuCard className="p-4 text-red-400 text-sm">{error}</NeuCard>}
-      {successMsg && <NeuCard className="p-4 text-neuPrimary text-sm">{successMsg}</NeuCard>}
-
-      {aging && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {Object.entries(aging.buckets || {}).map(([group, data]) => (
-            <NeuCard key={group} className="p-4">
-              <p className="text-xs text-neuTextMuted">{group}</p>
-              <p className="text-lg font-bold text-neuTextDark mt-1">
-                {data.totalOutstanding?.toLocaleString()}
-              </p>
-              <p className="text-xs text-neuTextMuted">{data.count} invoice(s)</p>
-            </NeuCard>
-          ))}
-        </div>
-      )}
-
-      <NeuCard>
-        <h3 className="text-lg font-semibold text-neuPrimary mb-4">New Payable</h3>
-        <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <NeuInput name="supplierName" value={form.supplierName} onChange={handleChange} placeholder="Supplier name" />
-          <NeuInput name="invoiceNumber" value={form.invoiceNumber} onChange={handleChange} placeholder="Invoice number" />
-          <NeuInput name="purchaseOrderNumber" value={form.purchaseOrderNumber} onChange={handleChange} placeholder="PO number (optional)" />
-          <NeuInput name="totalAmount" type="number" value={form.totalAmount} onChange={handleChange} placeholder="Total amount" />
-          <NeuInput name="issueDate" type="date" value={form.issueDate} onChange={handleChange} placeholder="Issue date" />
-          <NeuInput name="dueDate" type="date" value={form.dueDate} onChange={handleChange} placeholder="Due date" />
-          <div className="sm:col-span-3">
-            <NeuButton type="submit">Create Payable</NeuButton>
+    <main>
+      <section className="team-section">
+        <div className="section-header">
+          <div>
+            <h2>Accounts Payable</h2>
+            <p className="section-subtitle">Track supplier invoices, payments, and aging analysis</p>
           </div>
-        </form>
-        <p className="text-xs text-neuTextMuted mt-2">
-          Supplier and PO are entered manually until Module 2 (Procurement) is merged.
-        </p>
-      </NeuCard>
+        </div>
 
-      <NeuCard>
-        <h3 className="text-lg font-semibold text-neuPrimary mb-4">Payables</h3>
-        {loading ? (
-          <p className="text-neuTextMuted text-sm">Loading...</p>
-        ) : payables.length === 0 ? (
-          <p className="text-neuTextMuted text-sm">No payables yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-neuTextMuted border-b border-neuBorder">
-                  <th className="py-2 pr-4">Supplier</th>
-                  <th className="py-2 pr-4">Invoice</th>
-                  <th className="py-2 pr-4">Due</th>
-                  <th className="py-2 pr-4">Outstanding</th>
-                  <th className="py-2 pr-4">Aging</th>
-                  <th className="py-2 pr-4"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {payables.map((p) => (
-                  <tr key={p._id} className="border-b border-neuBorder/50">
-                    <td className="py-2 pr-4 text-neuTextDark font-medium">{p.supplierName}</td>
-                    <td className="py-2 pr-4 text-neuTextMuted">{p.invoiceNumber}</td>
-                    <td className="py-2 pr-4 text-neuTextMuted">
-                      {new Date(p.dueDate).toLocaleDateString()}
-                    </td>
-                    <td className="py-2 pr-4 font-semibold text-neuPrimary">
-                      {p.outstandingAmount?.toLocaleString()} {p.currency}
-                    </td>
-                    <td className="py-2 pr-4">
-                      <NeuBadge variant={agingVariant(p.agingGroup)}>{p.agingGroup}</NeuBadge>
-                    </td>
-                    <td className="py-2 pr-4 text-right">
-                      {p.outstandingAmount > 0 && (
-                        <button
-                          onClick={() => { setPayModal(p); setPayAmount(""); }}
-                          className="text-neuPrimary text-xs font-semibold hover:underline"
-                        >
-                          Record Payment
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {error && <div className="p-4 text-red-400 text-sm bg-red-400/10 rounded-lg mb-4">{error}</div>}
+        {successMsg && <div className="p-4 text-neuPrimary text-sm bg-neuPrimary/10 rounded-lg mb-4">{successMsg}</div>}
+
+        {aging && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+            {Object.entries(aging.buckets || {}).map(([group, data]) => (
+              <NeuCard key={group} className="p-4">
+                <p className="text-xs text-neuTextMuted">{group}</p>
+                <p className="text-lg font-bold text-neuTextDark mt-1">
+                  {data.totalOutstanding?.toLocaleString()}
+                </p>
+                <p className="text-xs text-neuTextMuted">{data.count} invoice(s)</p>
+              </NeuCard>
+            ))}
           </div>
         )}
-      </NeuCard>
+
+        <NeuCard>
+          <h3 className="text-lg font-semibold text-neuPrimary mb-4">New Payable</h3>
+          <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <NeuInput name="supplierName" value={form.supplierName} onChange={handleChange} placeholder="Supplier name" />
+            <NeuInput name="invoiceNumber" value={form.invoiceNumber} onChange={handleChange} placeholder="Invoice number" />
+            <NeuInput name="purchaseOrderNumber" value={form.purchaseOrderNumber} onChange={handleChange} placeholder="PO number (optional)" />
+            <NeuInput name="totalAmount" type="number" value={form.totalAmount} onChange={handleChange} placeholder="Total amount" />
+            <NeuInput name="issueDate" type="date" value={form.issueDate} onChange={handleChange} placeholder="Issue date" />
+            <NeuInput name="dueDate" type="date" value={form.dueDate} onChange={handleChange} placeholder="Due date" />
+            <div className="sm:col-span-3">
+              <NeuButton type="submit">Create Payable</NeuButton>
+            </div>
+          </form>
+          <p className="text-xs text-neuTextMuted mt-2">
+            Supplier and PO are entered manually until Module 2 (Procurement) is merged.
+          </p>
+        </NeuCard>
+
+        <NeuCard>
+          <h3 className="text-lg font-semibold text-neuPrimary mb-4">Payables</h3>
+          {loading ? (
+            <p className="text-neuTextMuted text-sm">Loading...</p>
+          ) : payables.length === 0 ? (
+            <p className="text-neuTextMuted text-sm">No payables yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-neuTextMuted border-b border-neuBorder">
+                    <th className="py-2 pr-4">Supplier</th>
+                    <th className="py-2 pr-4">Invoice</th>
+                    <th className="py-2 pr-4">Due</th>
+                    <th className="py-2 pr-4">Outstanding</th>
+                    <th className="py-2 pr-4">Aging</th>
+                    <th className="py-2 pr-4"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payables.map((p) => (
+                    <tr key={p._id} className="border-b border-neuBorder/50">
+                      <td className="py-2 pr-4 text-neuTextDark font-medium">{p.supplierName}</td>
+                      <td className="py-2 pr-4 text-neuTextMuted">{p.invoiceNumber}</td>
+                      <td className="py-2 pr-4 text-neuTextMuted">
+                        {new Date(p.dueDate).toLocaleDateString()}
+                      </td>
+                      <td className="py-2 pr-4 font-semibold text-neuPrimary">
+                        {p.outstandingAmount?.toLocaleString()} {p.currency}
+                      </td>
+                      <td className="py-2 pr-4">
+                        <NeuBadge variant={agingVariant(p.agingGroup)}>{p.agingGroup}</NeuBadge>
+                      </td>
+                      <td className="py-2 pr-4 text-right">
+                        {p.outstandingAmount > 0 && (
+                          <button
+                            onClick={() => { setPayModal(p); setPayAmount(""); }}
+                            className="text-neuPrimary text-xs font-semibold hover:underline"
+                          >
+                            Record Payment
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </NeuCard>
+      </section>
 
       {payModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -195,7 +202,7 @@ const PayablesPage = () => {
           </NeuCard>
         </div>
       )}
-    </div>
+    </main>
   );
 };
 

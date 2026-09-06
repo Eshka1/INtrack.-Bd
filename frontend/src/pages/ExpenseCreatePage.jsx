@@ -92,78 +92,83 @@ const ExpenseCreatePage = () => {
   };
 
   return (
-    <div className="max-w-sm mx-auto py-8">
-      <NeuCard className="p-8">
-        <div className="flex flex-col items-center mb-8">
-          <div className="neu-capsule w-16 h-16 flex items-center justify-center text-neuPrimary mb-4">
-            <ReceiptIcon />
+    <main>
+      <section className="team-section">
+        <div className="section-header">
+          <div>
+            <h2>Create Expense</h2>
+            <p className="section-subtitle">Log a company expense for tracking and reporting</p>
           </div>
-          <h2 className="text-2xl font-bold text-neuTextDark">New Expense</h2>
-          <p className="text-sm text-neuTextMuted mt-1 text-center">
-            Log a company expense for tracking and reporting
-          </p>
         </div>
 
-        {error && (
-          <div className="neu-inset-soft px-5 py-3 mb-5 text-red-600 text-sm font-medium text-center">
-            {error}
+        <NeuCard className="p-8 max-w-2xl">
+          <div className="flex flex-col items-center mb-8">
+            <div className="neu-capsule w-16 h-16 flex items-center justify-center text-neuPrimary mb-4">
+              <ReceiptIcon />
+            </div>
           </div>
-        )}
-        {successMsg && (
-          <div className="neu-inset-soft px-5 py-3 mb-5 text-neuPrimary text-sm font-medium text-center">
-            {successMsg}
-          </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <NeuInput
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            placeholder="Expense title"
-            icon={<TitleIcon />}
-          />
-          <NeuInput
-            name="amount"
-            type="number"
-            value={formData.amount}
-            onChange={handleChange}
-            placeholder="Amount (BDT)"
-            icon={<AmountIcon />}
-          />
-          <NeuSelect
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            icon={<TagIcon />}
-          >
-            <option value="">Select category</option>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </NeuSelect>
-          <NeuInput
-            name="expenseDate"
-            type="date"
-            value={formData.expenseDate}
-            onChange={handleChange}
-            icon={<DateIcon />}
-          />
+          {error && (
+            <div className="neu-inset px-5 py-3 mb-5 text-red-600 text-sm font-medium">
+              {error}
+            </div>
+          )}
+          {successMsg && (
+            <div className="neu-inset px-5 py-3 mb-5 text-neuPrimary text-sm font-medium">
+              {successMsg}
+            </div>
+          )}
 
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="neu-inset-soft w-full px-6 py-4 outline-none bg-transparent min-h-[80px] placeholder:text-neuTextMuted/70 focus:ring-2 focus:ring-neuMint/60 transition-all"
-            placeholder="Optional notes"
-          />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <NeuInput
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              placeholder="Expense title"
+              icon={<TitleIcon />}
+            />
+            <NeuInput
+              name="amount"
+              type="number"
+              value={formData.amount}
+              onChange={handleChange}
+              placeholder="Amount (BDT)"
+              icon={<AmountIcon />}
+            />
+            <NeuSelect
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              icon={<TagIcon />}
+            >
+              <option value="">Select category</option>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </NeuSelect>
+            <NeuInput
+              name="expenseDate"
+              type="date"
+              value={formData.expenseDate}
+              onChange={handleChange}
+              icon={<DateIcon />}
+            />
 
-          <NeuButton type="submit" disabled={loading} className="w-full !mt-6">
-            {loading ? "Submitting..." : "Create Expense"}
-          </NeuButton>
-        </form>
-      </NeuCard>
-    </div>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className="neu-inset w-full px-6 py-4 outline-none bg-transparent min-h-[80px] placeholder:text-neuTextMuted/70 focus:ring-2 focus:ring-neuMint/60 transition-all"
+              placeholder="Optional notes"
+            />
+
+            <NeuButton type="submit" disabled={loading} className="w-full !mt-6">
+              {loading ? "Submitting..." : "Create Expense"}
+            </NeuButton>
+          </form>
+        </NeuCard>
+      </section>
+    </main>
   );
 };
 

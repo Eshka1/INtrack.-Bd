@@ -106,20 +106,23 @@ const BudgetPage = () => {
 
   if (pageLoading) {
     return (
-      <div className="max-w-sm mx-auto py-8">
+      <main>
         <NeuCard className="p-8 text-center text-neuTextMuted">
           Loading budget data...
         </NeuCard>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="max-w-sm mx-auto py-8">
-      <NeuCard className="p-8">
-        <h2 className="text-xl font-bold text-neuPrimary mb-6">
-          Monthly Budget Management
-        </h2>
+    <main>
+      <section className="team-section">
+        <div className="section-header">
+          <div>
+            <h2>Monthly Budget Management</h2>
+            <p className="section-subtitle">Set and manage your monthly spending budget</p>
+          </div>
+        </div>
 
         {error && (
           <div className="neu-inset px-4 py-3 mb-4 text-red-600 text-sm font-medium">
@@ -132,45 +135,47 @@ const BudgetPage = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="text-sm font-medium text-neuTextMuted">Budget Name</label>
-            <div className="mt-1">
-              <NeuInput
-                icon={<BudgetNameIcon />}
-                value={budgetName}
-                onChange={(e) => setBudgetName(e.target.value)}
-                placeholder="Budget name"
-              />
+        <NeuCard className="p-8 max-w-2xl">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="text-sm font-medium text-neuTextMuted">Budget Name</label>
+              <div className="mt-1">
+                <NeuInput
+                  icon={<BudgetNameIcon />}
+                  value={budgetName}
+                  onChange={(e) => setBudgetName(e.target.value)}
+                  placeholder="Budget name"
+                />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="text-sm font-medium text-neuTextMuted">
-              Monthly Budget (BDT)
-            </label>
-            <div className="mt-1">
-              <NeuInput
-                icon={<AmountIcon />}
-                type="number"
-                value={budgetAmount}
-                onChange={(e) => setBudgetAmount(e.target.value)}
-                placeholder="Enter monthly budget amount"
-              />
+            <div>
+              <label className="text-sm font-medium text-neuTextMuted">
+                Monthly Budget (BDT)
+              </label>
+              <div className="mt-1">
+                <NeuInput
+                  icon={<AmountIcon />}
+                  type="number"
+                  value={budgetAmount}
+                  onChange={(e) => setBudgetAmount(e.target.value)}
+                  placeholder="Enter monthly budget amount"
+                />
+              </div>
             </div>
-          </div>
 
-          <NeuButton className="w-full !mt-6" type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Save / Update Budget"}
-          </NeuButton>
-          {budgetId && (
-            <NeuButton type="button" onClick={handleDelete} disabled={loading} className="w-full !mt-3 !bg-transparent">
-              Delete Budget
+            <NeuButton className="w-full !mt-6" type="submit" disabled={loading}>
+              {loading ? "Saving..." : "Save / Update Budget"}
             </NeuButton>
-          )}
-        </form>
-      </NeuCard>
-    </div>
+            {budgetId && (
+              <NeuButton type="button" onClick={handleDelete} disabled={loading} className="w-full !mt-3 !bg-transparent">
+                Delete Budget
+              </NeuButton>
+            )}
+          </form>
+        </NeuCard>
+      </section>
+    </main>
   );
 };
 
