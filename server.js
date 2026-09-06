@@ -1,19 +1,9 @@
-const app = require('./src/app');
-require('dotenv').config();
-const mongoose = require('mongoose');
-const { MONGO_URI } = require('./src/config/database');
+// Keep the repository-root command compatible with the actual backend layout.
+// Imports expose the app for tests; direct execution starts the backend.
+const app = require('./backend/server');
 
-// Only connect DB & start server when running node server.js, NOT for jest
-if(require.main === module){
-  if(MONGO_URI){
-    mongoose.connect(MONGO_URI)
-      .then(()=> console.log("Dev DB connected"))
-      .catch(err=>console.log("DB error:",err));
-  }
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, ()=>{
-    console.log(`Server running http://localhost:${PORT}`);
-  })
+if (require.main === module) {
+  app.start();
 }
 
 module.exports = app;

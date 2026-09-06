@@ -15,6 +15,18 @@ function module1AuthMiddleware(req, res, next) {
     return next();
   }
 
+  // Normalize the active backend auth context when `protect` has already
+  // verified a JWT and populated req.user/req.tenantId.
+  if (req.user && req.tenantId && req.user._id) {
+    req.auth = {
+      userId: String(req.user._id),
+      companyId: req.tenantId,
+      role: req.user.role?.name || req.user.role,
+      permissions: req.user.role?.permissions || []
+    };
+    return next();
+  }
+
   // Check if development bypass is explicitly allowed
   const isProduction = process.env.NODE_ENV === 'production';
   const isDevBypassEnabled = process.env.DEV_AUTH_BYPASS === 'true';
