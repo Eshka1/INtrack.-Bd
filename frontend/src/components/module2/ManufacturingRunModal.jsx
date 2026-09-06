@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, PlayCircle, AlertCircle } from 'lucide-react';
+import Module2Dialog from './Module2Dialog';
 
 const CLIENT_CONVERSIONS = {
   ton: { family: 'mass', ratio: 1000000 },
@@ -43,6 +44,8 @@ function convertClientUnits(qty, fromUnit, toUnit) {
 export default function ManufacturingRunModal({ recipes, inventory, onClose, onExecute }) {
   const [selectedRecipeId, setSelectedRecipeId] = useState(recipes[0]?._id || '');
   const [batchesToProduce, setBatchesToProduce] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const selectedRecipe = recipes.find((r) => r._id === selectedRecipeId);
 
@@ -72,26 +75,36 @@ export default function ManufacturingRunModal({ recipes, inventory, onClose, onE
 
   const canExecute = deductions.length > 0 && deductions.every((d) => d.hasEnough);
 
-  const handleRun = () => {
-    if (!canExecute) return;
-    onExecute({
-      recipeId: selectedRecipe._id,
-      batches: Number(batchesToProduce),
-      materialDeductions: deductions
-    });
+  const handleRun = async () => {
+    if (!canExecute || submitting) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      await onExecute({
+        recipeId: selectedRecipe._id,
+        batches: Number(batchesToProduce),
+        materialDeductions: deductions
+      });
+    } catch (requestError) {
+      setError(requestError.response?.data?.error || 'The production run could not be completed.');
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <Module2Dialog onClose={onClose} labelledBy="module2-production-title">
       <div className="w-full max-w-lg bg-[#0a1e17] border border-emerald-500/30 rounded-2xl p-6 space-y-6 shadow-2xl">
         <div className="flex justify-between items-center border-b border-emerald-500/20 pb-4">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <h3 id="module2-production-title" className="text-lg font-bold text-white flex items-center gap-2">
             <PlayCircle className="w-5 h-5 text-emerald-400" /> Execute Production Run
           </h3>
           <button onClick={onClose} className="text-emerald-400 hover:text-white transition cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {error && <p className="module2-action-error" role="alert">{error}</p>}
+        {!selectedRecipe && <p className="module2-action-note">Create a BOM recipe before starting production.</p>}
 
         <div className="space-y-4">
           <div>
@@ -159,17 +172,17 @@ export default function ManufacturingRunModal({ recipes, inventory, onClose, onE
           </button>
           <button
             onClick={handleRun}
-            disabled={!canExecute}
+            disabled={!canExecute || submitting}
             className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
               canExecute
                 ? 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/20'
                 : 'bg-emerald-950 text-emerald-500/30 cursor-not-allowed border border-emerald-500/10'
             }`}
           >
-            Execute Run & Deduct Stock
+            {submitting ? 'Executing…' : 'Execute Run & Deduct Stock'}
           </button>
         </div>
       </div>
-    </div>
+    </Module2Dialog>
   );
 }

@@ -7,6 +7,8 @@ export default function POIngestionPanel({ suppliers, onIngestPO }) {
   const [quantityReceived, setQuantityReceived] = useState('');
   const [location, setLocation] = useState('Main Warehouse Dock');
   const [successMsg, setSuccessMsg] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   // Active supplier object based on user selection
   const currentSupplier = suppliers.find((s) => (s._id || s.id) === selectedSupplierId);
@@ -32,26 +34,35 @@ export default function POIngestionPanel({ suppliers, onIngestPO }) {
     setSelectedProduct(prod || null);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedSupplierId || !selectedProduct || qty <= 0) return;
 
-    onIngestPO({
-      supplierId: currentSupplier._id || currentSupplier.id,
-      supplierName: currentSupplier.name,
-      productName: selectedProduct.name,
-      sku: selectedProduct.sku,
-      quantityReceived: qty,
-      unitCost: unitCost,
-      totalCost: totalCost,
-      unit: selectedProduct.unit || 'units',
-      location
-    });
+    setSubmitting(true);
+    setActionError('');
+    try {
+      await onIngestPO({
+        supplierId: currentSupplier._id || currentSupplier.id,
+        supplierName: currentSupplier.name,
+        productName: selectedProduct.name,
+        sku: selectedProduct.sku,
+        quantityReceived: qty,
+        unitCost: unitCost,
+        totalCost: totalCost,
+        unit: selectedProduct.unit || 'units',
+        location
+      });
+    } catch (requestError) {
+      setActionError(requestError.response?.data?.error || 'The purchase order could not be received.');
+      setSubmitting(false);
+      return;
+    }
 
     setSuccessMsg(true);
     setQuantityReceived('');
     setSelectedProduct(null);
     setSelectedSupplierId('');
+    setSubmitting(false);
 
     setTimeout(() => setSuccessMsg(false), 3500);
   };
@@ -76,6 +87,7 @@ export default function POIngestionPanel({ suppliers, onIngestPO }) {
           <span>Purchase order intake recorded! Material balance synchronized to MongoDB.</span>
         </div>
       )}
+      {actionError && <p className="module2-action-error" role="alert">{actionError}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Supplier Selector */}
@@ -211,14 +223,14 @@ export default function POIngestionPanel({ suppliers, onIngestPO }) {
 
         <button
           type="submit"
-          disabled={!selectedSupplierId || !selectedProduct || qty <= 0}
+          disabled={!selectedSupplierId || !selectedProduct || qty <= 0 || submitting}
           className={`w-full py-3 rounded-xl font-bold transition cursor-pointer shadow-lg shadow-emerald-500/20 ${
             selectedSupplierId && selectedProduct && qty > 0
               ? 'bg-emerald-500 hover:bg-emerald-400 text-black'
               : 'bg-emerald-950 text-emerald-500/30 cursor-not-allowed border border-emerald-500/10'
           }`}
         >
-          Confirm Purchase Order & Add to Ledger
+          {submitting ? 'Receiving Purchase Order…' : 'Confirm Purchase Order & Add to Ledger'}
         </button>
       </form>
     </div>

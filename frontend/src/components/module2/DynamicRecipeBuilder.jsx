@@ -10,6 +10,8 @@ export default function DynamicRecipeBuilder({ inventory, recipes, onAddRecipe, 
   const [selectedMatId, setSelectedMatId] = useState('');
   const [matQty, setMatQty] = useState('');
   const [ingredientUnit, setIngredientUnit] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const handleSelectMaterial = (e) => {
     const id = e.target.value;
@@ -44,7 +46,16 @@ export default function DynamicRecipeBuilder({ inventory, recipes, onAddRecipe, 
     setIngredients((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
-  const handleSaveRecipe = (e) => {
+  const handleDeleteRecipe = async (recipeId) => {
+    setActionError('');
+    try {
+      await onDeleteRecipe(recipeId);
+    } catch (requestError) {
+      setActionError(requestError.response?.data?.error || 'The BOM recipe could not be deleted.');
+    }
+  };
+
+  const handleSaveRecipe = async (e) => {
     e.preventDefault();
     if (!recipeName.trim()) return;
 
@@ -68,12 +79,20 @@ export default function DynamicRecipeBuilder({ inventory, recipes, onAddRecipe, 
       return;
     }
 
-    onAddRecipe({
-      name: recipeName.trim(),
-      outputQty: Number(outputQty) || 1,
-      outputUnit: outputUnit.trim() || 'units',
-      ingredients: finalIngredients
-    });
+    setSubmitting(true);
+    setActionError('');
+    try {
+      await onAddRecipe({
+        name: recipeName.trim(),
+        outputQty: Number(outputQty) || 1,
+        outputUnit: outputUnit.trim() || 'units',
+        ingredients: finalIngredients
+      });
+    } catch (requestError) {
+      setActionError(requestError.response?.data?.error || 'The BOM recipe could not be saved.');
+      setSubmitting(false);
+      return;
+    }
 
     setRecipeName('');
     setOutputQty(1);
@@ -82,6 +101,7 @@ export default function DynamicRecipeBuilder({ inventory, recipes, onAddRecipe, 
     setSelectedMatId('');
     setMatQty('');
     setIngredientUnit('');
+    setSubmitting(false);
   };
 
   return (
@@ -201,11 +221,13 @@ export default function DynamicRecipeBuilder({ inventory, recipes, onAddRecipe, 
             )}
           </div>
 
+          {actionError && <p className="module2-action-error" role="alert">{actionError}</p>}
           <button
             type="submit"
+            disabled={submitting}
             className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition cursor-pointer shadow-lg shadow-emerald-500/20"
           >
-            Save BOM Recipe to MongoDB
+            {submitting ? 'Saving Recipe…' : 'Save BOM Recipe to MongoDB'}
           </button>
         </form>
       </div>
@@ -224,7 +246,7 @@ export default function DynamicRecipeBuilder({ inventory, recipes, onAddRecipe, 
             return (
               <div key={recipeId || rec.name} className="bg-emerald-950/30 border border-emerald-500/20 rounded-2xl p-5 shadow-xl relative group">
                 <button
-                  onClick={() => onDeleteRecipe(recipeId)}
+                  onClick={() => handleDeleteRecipe(recipeId)}
                   className="absolute top-4 right-4 p-1.5 text-emerald-500/50 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition cursor-pointer"
                   title="Delete Recipe"
                 >

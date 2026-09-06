@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { Users, Plus, Trash2, Mail, Clock, Star, Package, Tag, AlertCircle, Edit3, X, Check } from 'lucide-react';
+import Module2Dialog from './Module2Dialog';
 
 export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSupplier, onDeleteSupplier }) {
   const [showForm, setShowForm] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -53,7 +56,7 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
 
@@ -67,13 +70,21 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
       });
     }
 
-    onAddSupplier({
-      name: formData.name.trim(),
-      contactEmail: formData.contactEmail.trim() || 'N/A',
-      leadTimeDays: Number(formData.leadTimeDays) || 3,
-      reliabilityScore: Number(formData.reliabilityScore) || 5.0,
-      products: finalProducts
-    });
+    setSubmitting(true);
+    setActionError('');
+    try {
+      await onAddSupplier({
+        name: formData.name.trim(),
+        contactEmail: formData.contactEmail.trim() || 'N/A',
+        leadTimeDays: Number(formData.leadTimeDays) || 3,
+        reliabilityScore: Number(formData.reliabilityScore) || 5.0,
+        products: finalProducts
+      });
+    } catch (requestError) {
+      setActionError(requestError.response?.data?.error || 'The supplier could not be saved.');
+      setSubmitting(false);
+      return;
+    }
 
     setFormData({
       name: '',
@@ -84,6 +95,7 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
     });
     setProductInput({ name: '', sku: '', unitPrice: '', unit: '' });
     setShowForm(false);
+    setSubmitting(false);
   };
 
   // --- EDIT CATALOG MODAL HANDLERS ---
@@ -117,7 +129,16 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
     }));
   };
 
-  const handleSaveSupplierEdit = () => {
+  const handleDeleteSupplier = async (supplierId) => {
+    setActionError('');
+    try {
+      await onDeleteSupplier(supplierId);
+    } catch (requestError) {
+      setActionError(requestError.response?.data?.error || 'The supplier could not be deleted.');
+    }
+  };
+
+  const handleSaveSupplierEdit = async () => {
     if (!editingSupplier) return;
 
     let updatedProducts = [...(editingSupplier.products || [])];
@@ -130,12 +151,19 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
       });
     }
 
-    onUpdateSupplier(editingSupplier._id, {
-      ...editingSupplier,
-      products: updatedProducts
-    });
-
-    setEditingSupplier(null);
+    setSubmitting(true);
+    setActionError('');
+    try {
+      await onUpdateSupplier(editingSupplier._id, {
+        ...editingSupplier,
+        products: updatedProducts
+      });
+      setEditingSupplier(null);
+    } catch (requestError) {
+      setActionError(requestError.response?.data?.error || 'The supplier catalog could not be updated.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -294,11 +322,13 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
             )}
           </div>
 
+          {actionError && <p className="module2-action-error" role="alert">{actionError}</p>}
           <button
             type="submit"
+            disabled={submitting}
             className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition cursor-pointer shadow-lg shadow-emerald-500/20"
           >
-            Save Supplier & Catalog to MongoDB
+            {submitting ? 'Saving…' : 'Save Supplier & Catalog to MongoDB'}
           </button>
         </form>
       )}
@@ -323,7 +353,7 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
                   <Edit3 className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => onDeleteSupplier(s._id)}
+                  onClick={() => handleDeleteSupplier(s._id)}
                   className="p-1.5 text-emerald-500/50 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition cursor-pointer"
                   title="Delete Supplier"
                 >
@@ -371,11 +401,11 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
 
       {/* --- EDIT SUPPLIER CATALOG MODAL --- */}
       {editingSupplier && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <Module2Dialog onClose={() => !submitting && setEditingSupplier(null)} labelledBy="module2-supplier-dialog-title">
           <div className="w-full max-w-xl bg-[#0a1e17] border border-emerald-500/30 rounded-2xl p-6 space-y-5 shadow-2xl">
             <div className="flex justify-between items-center border-b border-emerald-500/20 pb-4">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <h3 id="module2-supplier-dialog-title" className="text-lg font-bold text-white flex items-center gap-2">
                   <Edit3 className="w-5 h-5 text-emerald-400" /> Edit Catalog: {editingSupplier.name}
                 </h3>
                 <p className="text-xs text-emerald-300/70">Add new products or remove existing items from this supplier.</p>
@@ -462,6 +492,7 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
             </div>
 
             {/* Modal Actions */}
+            {actionError && <p className="module2-action-error" role="alert">{actionError}</p>}
             <div className="flex gap-3 pt-3 border-t border-emerald-500/20">
               <button
                 type="button"
@@ -473,13 +504,14 @@ export default function SupplierDirectory({ suppliers, onAddSupplier, onUpdateSu
               <button
                 type="button"
                 onClick={handleSaveSupplierEdit}
+                disabled={submitting}
                 className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl text-xs transition cursor-pointer shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-1.5"
               >
-                <Check className="w-4 h-4" /> Save Updated Catalog
+                <Check className="w-4 h-4" /> {submitting ? 'Saving…' : 'Save Updated Catalog'}
               </button>
             </div>
           </div>
-        </div>
+        </Module2Dialog>
       )}
     </div>
   );
