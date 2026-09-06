@@ -18,6 +18,7 @@ import ExpenseCreatePage from './pages/ExpenseCreatePage';
 import PayablesPage from './pages/PayablesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import CurrencySettingsPage from './pages/CurrencySettingsPage';
+import OperationsDashboard from './pages/OperationsDashboard';
 
 import './App.css';
 
@@ -66,6 +67,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Billing />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/operations"
+            element={
+              <ProtectedRoute>
+                <OperationsDashboard />
               </ProtectedRoute>
             }
           />

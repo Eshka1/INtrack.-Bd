@@ -19,6 +19,7 @@ const assetCategoryRoutes = require('./routes/assetCategoryRoutes');
 const warehouseRoutes = require('./routes/warehouseRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const financeRoutes = require('./src/modules/finance/routes/financeRoutes');
+const module2Routes = require('./src/modules/module2/routes/module2Routes');
 
 /**
  * This file builds and exports the Express `app` only — no DB connection,
@@ -72,6 +73,7 @@ app.use('/api/team', teamRoutes);
 app.use('/api/asset-categories', assetCategoryRoutes);
 app.use('/api/warehouses', warehouseRoutes);
 app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/module2', module2Routes);
 app.use('/api/finance', (req, res, next) => {
   if (req.headers.authorization) {
     return protect(req, res, next);
