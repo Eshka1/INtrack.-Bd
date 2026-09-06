@@ -41,9 +41,10 @@ function convertClientUnits(qty, fromUnit, toUnit) {
   return qty;
 }
 
-export default function ManufacturingRunModal({ recipes, inventory, onClose, onExecute }) {
+export default function ManufacturingRunModal({ recipes, inventory, warehouses, onClose, onExecute }) {
   const [selectedRecipeId, setSelectedRecipeId] = useState(recipes[0]?._id || '');
   const [batchesToProduce, setBatchesToProduce] = useState(1);
+  const [warehouseId, setWarehouseId] = useState(warehouses.find((warehouse) => inventory.some((item) => item.warehouseId === warehouse._id))?._id || warehouses[0]?._id || '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -53,7 +54,7 @@ export default function ManufacturingRunModal({ recipes, inventory, onClose, onE
     ? selectedRecipe.ingredients.map((ing) => {
         const totalNeededRecipeUnit = Number((ing.quantityRequired * batchesToProduce).toFixed(4));
         const currentInv = inventory.find(
-          (i) => i._id === ing.rawMaterialId || i.name.toLowerCase() === ing.rawMaterialName.toLowerCase()
+          (i) => i.warehouseId === warehouseId && (i._id === ing.rawMaterialId || i.name.toLowerCase() === ing.rawMaterialName.toLowerCase())
         );
         const inStock = Number(currentInv?.currentBalance || 0);
         const warehouseUnit = currentInv?.unit || ing.unit;
@@ -73,7 +74,7 @@ export default function ManufacturingRunModal({ recipes, inventory, onClose, onE
       })
     : [];
 
-  const canExecute = deductions.length > 0 && deductions.every((d) => d.hasEnough);
+  const canExecute = Boolean(warehouseId) && deductions.length > 0 && deductions.every((d) => d.hasEnough);
 
   const handleRun = async () => {
     if (!canExecute || submitting) return;
@@ -82,6 +83,7 @@ export default function ManufacturingRunModal({ recipes, inventory, onClose, onE
     try {
       await onExecute({
         recipeId: selectedRecipe._id,
+        warehouseId,
         batches: Number(batchesToProduce),
         materialDeductions: deductions
       });
@@ -117,6 +119,14 @@ export default function ManufacturingRunModal({ recipes, inventory, onClose, onE
               {recipes.map((r) => (
                 <option key={r._id} value={r._id}>{r.name}</option>
               ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-emerald-400 mb-1">Production Warehouse</label>
+            <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} className="w-full bg-[#071d15] border border-emerald-500/30 rounded-xl px-4 py-2 text-sm text-white focus:outline-none">
+              <option value="">-- Choose Warehouse Location --</option>
+              {warehouses.map((warehouse) => <option key={warehouse._id} value={warehouse._id}>{warehouse.displayName} ({warehouse.locationType})</option>)}
             </select>
           </div>
 

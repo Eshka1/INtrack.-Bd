@@ -8,11 +8,15 @@ async function createSupplier(token, name = 'Apex Textiles') {
   });
 }
 
-async function receiveStock(token, supplierId, quantity = 10) {
+async function createWarehouse(token, name = `Warehouse-${Math.random().toString(36).slice(2, 7)}`, parentLocation) {
+  return request(app).post('/api/warehouses').set(authHeader(token)).send({ name, locationType: parentLocation ? 'shelf' : 'building', parentLocation });
+}
+
+async function receiveStock(token, supplierId, warehouseId, quantity = 10) {
   const po = await request(app).post('/api/module2/purchase-orders').set(authHeader(token)).send({
     poNumber: `PO-${Math.random().toString(36).slice(2, 8)}`,
     supplierId,
-    warehouseName: 'Main Warehouse',
+    warehouseId,
     items: [{ itemName: 'Cotton Yarn', sku: 'YARN-001', orderedQuantity: quantity, unitCost: 5, unitOfMeasure: 'kg' }]
   });
   expect(po.status).toBe(201);
@@ -33,8 +37,9 @@ describe('Module 2 integration', () => {
     const first = await registerCompany();
     const second = await registerCompany();
     const supplier = await createSupplier(first.token);
+    const warehouse = await createWarehouse(first.token);
     expect(supplier.status).toBe(201);
-    await receiveStock(first.token, supplier.body.data._id, 12.5);
+    await receiveStock(first.token, supplier.body.data._id, warehouse.body.data._id, 12.5);
 
     const firstInventory = await request(app).get('/api/module2/inventory/alerts').set(authHeader(first.token));
     const secondInventory = await request(app).get('/api/module2/inventory/alerts').set(authHeader(second.token));
@@ -49,7 +54,8 @@ describe('Module 2 integration', () => {
   test('creates recipes and completes a manufacturing run with decimal deduction', async () => {
     const tenant = await registerCompany();
     const supplier = await createSupplier(tenant.token);
-    await receiveStock(tenant.token, supplier.body.data._id, 10);
+    const warehouse = await createWarehouse(tenant.token);
+    await receiveStock(tenant.token, supplier.body.data._id, warehouse.body.data._id, 10);
     const recipe = await request(app).post('/api/module2/recipes').set(authHeader(tenant.token)).send({
       productName: 'Fabric Roll', productSku: 'FAB-001', batchYieldQuantity: 1,
       ingredients: [{ itemName: 'Cotton Yarn', sku: 'YARN-001', consumptionPerPiece: 0.25, unitOfMeasure: 'kg' }]
@@ -57,7 +63,7 @@ describe('Module 2 integration', () => {
     expect(recipe.status).toBe(201);
 
     const run = await request(app).post('/api/module2/manufacturing/run').set(authHeader(tenant.token)).send({
-      recipeId: recipe.body.data._id, warehouseName: 'Main Warehouse', quantityProduced: 4
+      recipeId: recipe.body.data._id, warehouseId: warehouse.body.data._id, quantityProduced: 4
     });
     expect(run.status).toBe(201);
 
@@ -68,18 +74,75 @@ describe('Module 2 integration', () => {
   test('insufficient stock rejects the run without changing inventory', async () => {
     const tenant = await registerCompany();
     const supplier = await createSupplier(tenant.token);
-    await receiveStock(tenant.token, supplier.body.data._id, 2);
+    const warehouse = await createWarehouse(tenant.token);
+    await receiveStock(tenant.token, supplier.body.data._id, warehouse.body.data._id, 2);
     const recipe = await request(app).post('/api/module2/recipes').set(authHeader(tenant.token)).send({
       productName: 'Heavy Fabric', productSku: 'HEAVY-001',
       ingredients: [{ itemName: 'Cotton Yarn', sku: 'YARN-001', consumptionPerPiece: 3, unitOfMeasure: 'kg' }]
     });
 
     const run = await request(app).post('/api/module2/manufacturing/run').set(authHeader(tenant.token)).send({
-      recipeId: recipe.body.data._id, warehouseName: 'Main Warehouse', quantityProduced: 1
+      recipeId: recipe.body.data._id, warehouseId: warehouse.body.data._id, quantityProduced: 1
     });
     expect(run.status).toBe(400);
 
     const inventory = await request(app).get('/api/module2/inventory/alerts').set(authHeader(tenant.token));
     expect(inventory.body.inventory[0].currentQuantity).toBe(2);
+  });
+
+  test('rejects cross-tenant and inactive storage destinations', async () => {
+    const first = await registerCompany();
+    const second = await registerCompany();
+    const supplier = await createSupplier(first.token);
+    const otherWarehouse = await createWarehouse(second.token, 'Other Tenant Warehouse');
+
+    const crossTenant = await request(app).post('/api/module2/purchase-orders').set(authHeader(first.token)).send({
+      poNumber: 'PO-CROSS-TENANT', supplierId: supplier.body.data._id, warehouseId: otherWarehouse.body.data._id,
+      warehouseName: 'Spoofed Name', items: [{ itemName: 'Cotton Yarn', sku: 'YARN-001', orderedQuantity: 1, unitCost: 5, unitOfMeasure: 'kg' }]
+    });
+    expect(crossTenant.status).toBe(404);
+
+    const ownWarehouse = await createWarehouse(first.token, 'Inactive Warehouse');
+    await request(app).delete(`/api/warehouses/${ownWarehouse.body.data._id}`).set(authHeader(first.token));
+    const inactive = await request(app).post('/api/module2/purchase-orders').set(authHeader(first.token)).send({
+      poNumber: 'PO-INACTIVE', supplierId: supplier.body.data._id, warehouseId: ownWarehouse.body.data._id,
+      items: [{ itemName: 'Cotton Yarn', sku: 'YARN-001', orderedQuantity: 1, unitCost: 5, unitOfMeasure: 'kg' }]
+    });
+    expect(inactive.status).toBe(404);
+
+    const malformed = await request(app).post('/api/module2/purchase-orders').set(authHeader(first.token)).send({
+      poNumber: 'PO-MALFORMED', supplierId: supplier.body.data._id, warehouseId: 'not-an-object-id',
+      items: [{ itemName: 'Cotton Yarn', sku: 'YARN-001', orderedQuantity: 1, unitCost: 5, unitOfMeasure: 'kg' }]
+    });
+    expect(malformed.status).toBe(400);
+  });
+
+  test('keeps the same SKU isolated across warehouse locations and trusts the referenced name', async () => {
+    const tenant = await registerCompany();
+    const supplier = await createSupplier(tenant.token);
+    const building = await createWarehouse(tenant.token, 'Main Site');
+    const shelf = await createWarehouse(tenant.token, 'Shelf A', building.body.data._id);
+
+    await receiveStock(tenant.token, supplier.body.data._id, building.body.data._id, 3.5);
+    await receiveStock(tenant.token, supplier.body.data._id, shelf.body.data._id, 7.25);
+    const inventory = await request(app).get('/api/module2/inventory/alerts').set(authHeader(tenant.token));
+
+    expect(inventory.body.inventory).toHaveLength(2);
+    expect(inventory.body.inventory.find((item) => item.warehouse._id === building.body.data._id).currentQuantity).toBe(3.5);
+    expect(inventory.body.inventory.find((item) => item.warehouse._id === shelf.body.data._id).currentQuantity).toBe(7.25);
+    expect(inventory.body.inventory.map((item) => item.warehouseName).sort()).toEqual(['Main Site', 'Shelf A']);
+
+    const recipe = await request(app).post('/api/module2/recipes').set(authHeader(tenant.token)).send({
+      productName: 'Location-bound Product', productSku: 'LOC-001',
+      ingredients: [{ itemName: 'Cotton Yarn', sku: 'YARN-001', consumptionPerPiece: 5, unitOfMeasure: 'kg' }]
+    });
+    const run = await request(app).post('/api/module2/manufacturing/run').set(authHeader(tenant.token)).send({
+      recipeId: recipe.body.data._id, warehouseId: building.body.data._id, quantityProduced: 1
+    });
+    expect(run.status).toBe(400);
+
+    const unchanged = await request(app).get('/api/module2/inventory/alerts').set(authHeader(tenant.token));
+    expect(unchanged.body.inventory.find((item) => item.warehouse._id === building.body.data._id).currentQuantity).toBe(3.5);
+    expect(unchanged.body.inventory.find((item) => item.warehouse._id === shelf.body.data._id).currentQuantity).toBe(7.25);
   });
 });

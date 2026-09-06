@@ -4,12 +4,22 @@ const PurchaseOrder = require('../models/PurchaseOrder');
 const Recipe = require('../models/Recipe');
 const ManufacturingRun = require('../models/ManufacturingRun');
 const OperationalStock = require('../models/OperationalStock');
+const Warehouse = require('../../../../models/Warehouse');
 const { convertUnits } = require('../utils/units');
 const { AppError } = require('../../../../utils/errorHandler');
 const asyncHandler = require('../../../../utils/asyncHandler');
 
 const scoped = (req, extra = {}) => ({ ...extra, tenantId: req.tenantId });
 const round = (value) => Number(Number(value).toFixed(4));
+
+const resolveWarehouse = async (req, warehouseId) => {
+  if (!warehouseId || !mongoose.isValidObjectId(warehouseId)) {
+    throw new AppError('A valid warehouseId is required', 400);
+  }
+  const warehouse = await Warehouse.findOne(scoped(req, { _id: warehouseId, isActive: true }));
+  if (!warehouse) throw new AppError('Storage destination not found', 404);
+  return warehouse;
+};
 
 exports.getSuppliers = asyncHandler(async (req, res) => {
   const data = await Supplier.find(scoped(req)).sort({ createdAt: -1 });
@@ -37,16 +47,20 @@ exports.deleteSupplier = asyncHandler(async (req, res) => {
 });
 
 exports.getPurchaseOrders = asyncHandler(async (req, res) => {
-  const data = await PurchaseOrder.find(scoped(req)).populate('supplierId').sort({ createdAt: -1 });
+  const data = await PurchaseOrder.find(scoped(req)).populate('supplierId').populate('warehouse', 'name locationType parentLocation isActive').sort({ createdAt: -1 });
   res.json({ success: true, count: data.length, data });
 });
 
 exports.createPurchaseOrder = asyncHandler(async (req, res) => {
   const supplier = await Supplier.findOne(scoped(req, { _id: req.body.supplierId }));
   if (!supplier) throw new AppError('Supplier not found', 404);
+  const warehouse = await resolveWarehouse(req, req.body.warehouseId);
   const items = Array.isArray(req.body.items) ? req.body.items : [];
   const totalCost = round(items.reduce((sum, item) => sum + Number(item.orderedQuantity) * Number(item.unitCost), 0));
-  const data = await PurchaseOrder.create({ ...req.body, tenantId: req.tenantId, items, totalCost });
+  const payload = { ...req.body };
+  delete payload.warehouseId;
+  delete payload.warehouseName;
+  const data = await PurchaseOrder.create({ ...payload, tenantId: req.tenantId, warehouse: warehouse._id, warehouseName: warehouse.name, items, totalCost });
   res.status(201).json({ success: true, data });
 });
 
@@ -54,6 +68,7 @@ exports.ingestShipment = asyncHandler(async (req, res) => {
   const po = await PurchaseOrder.findOne(scoped(req, { _id: req.params.poId }));
   if (!po) throw new AppError('Purchase order not found', 404);
   if (po.status === 'CANCELLED') throw new AppError('Cancelled purchase orders cannot be received', 400);
+  const warehouse = await resolveWarehouse(req, po.warehouse);
   const receivedItems = Array.isArray(req.body.receivedItems) ? req.body.receivedItems : [];
   if (!receivedItems.length) throw new AppError('receivedItems is required', 400);
 
@@ -68,8 +83,8 @@ exports.ingestShipment = asyncHandler(async (req, res) => {
     const poItem = po.items.find((item) => item.sku === received.sku);
     poItem.receivedQuantity = round(poItem.receivedQuantity + Number(received.quantity));
     await OperationalStock.findOneAndUpdate(
-      scoped(req, { warehouseName: po.warehouseName, sku: received.sku }),
-      { $inc: { currentQuantity: Number(received.quantity) }, $setOnInsert: { itemName: poItem.itemName, unitOfMeasure: poItem.unitOfMeasure } },
+      scoped(req, { warehouse: warehouse._id, sku: received.sku }),
+      { $inc: { currentQuantity: Number(received.quantity) }, $set: { warehouseName: warehouse.name }, $setOnInsert: { itemName: poItem.itemName, unitOfMeasure: poItem.unitOfMeasure } },
       { upsert: true, new: true, runValidators: true }
     );
   }
@@ -102,11 +117,11 @@ exports.executeManufacturingRun = asyncHandler(async (req, res) => {
   if (!recipe) throw new AppError('Recipe not found', 404);
   const quantityProduced = Number(req.body.quantityProduced);
   if (!(quantityProduced > 0)) throw new AppError('quantityProduced must be greater than zero', 400);
-  const warehouseName = req.body.warehouseName || 'Main Warehouse';
+  const warehouse = await resolveWarehouse(req, req.body.warehouseId);
   const deductions = [];
 
   for (const ingredient of recipe.ingredients) {
-    const stock = await OperationalStock.findOne(scoped(req, { warehouseName, sku: ingredient.sku }));
+    const stock = await OperationalStock.findOne(scoped(req, { warehouse: warehouse._id, sku: ingredient.sku }));
     const rawNeeded = Number(ingredient.consumptionPerPiece) * quantityProduced;
     const required = stock ? convertUnits(rawNeeded, ingredient.unitOfMeasure, stock.unitOfMeasure) : rawNeeded;
     if (!stock || stock.currentQuantity < required) {
@@ -123,7 +138,8 @@ exports.executeManufacturingRun = asyncHandler(async (req, res) => {
     tenantId: req.tenantId,
     runNumber: `RUN-${Date.now()}-${new mongoose.Types.ObjectId().toString().slice(-6)}`,
     recipeId: recipe._id,
-    warehouseName,
+    warehouse: warehouse._id,
+    warehouseName: warehouse.name,
     quantityProduced,
     deductedMaterials: deductions.map(({ ingredient, required, stock }) => ({ itemName: ingredient.itemName, sku: ingredient.sku, quantityDeducted: required, unitOfMeasure: stock.unitOfMeasure }))
   });
@@ -131,7 +147,7 @@ exports.executeManufacturingRun = asyncHandler(async (req, res) => {
 });
 
 exports.getInventoryAndAlerts = asyncHandler(async (req, res) => {
-  const inventory = await OperationalStock.find(scoped(req)).sort({ createdAt: -1 });
+  const inventory = await OperationalStock.find(scoped(req)).populate('warehouse', 'name locationType parentLocation isActive').sort({ createdAt: -1 });
   const lowStockAlerts = inventory.filter((stock) => stock.currentQuantity <= stock.safetyStockThreshold);
   res.json({ success: true, totalItems: inventory.length, alertsCount: lowStockAlerts.length, inventory, lowStockAlerts });
 });

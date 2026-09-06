@@ -7,6 +7,7 @@ import DynamicRecipeBuilder from '../components/module2/DynamicRecipeBuilder';
 import ManufacturingRunModal from '../components/module2/ManufacturingRunModal';
 import LowStockAlertBanner from '../components/module2/LowStockAlertBanner';
 import { module2Api } from '../services/module2Api';
+import { warehouseService } from '../services/warehouseService';
 import '../styles/module2.css';
 
 const inventoryForUi = (items = []) => items.map((item) => ({
@@ -15,8 +16,26 @@ const inventoryForUi = (items = []) => items.map((item) => ({
   currentBalance: item.currentQuantity,
   safetyStock: item.safetyStockThreshold,
   unit: item.unitOfMeasure,
-  location: item.warehouseName
+  location: item.warehouse?.name || item.warehouseName,
+  warehouseId: item.warehouse?._id || item.warehouse
 }));
+
+const locationsForUi = (locations = []) => {
+  const byId = new Map(locations.map((location) => [location._id, location]));
+  const pathFor = (location) => {
+    const names = [location.name];
+    let parentId = location.parentLocation?._id || location.parentLocation;
+    const seen = new Set([location._id]);
+    while (parentId && byId.has(parentId) && !seen.has(parentId)) {
+      seen.add(parentId);
+      const parent = byId.get(parentId);
+      names.unshift(parent.name);
+      parentId = parent.parentLocation?._id || parent.parentLocation;
+    }
+    return names.join(' › ');
+  };
+  return locations.map((location) => ({ ...location, displayName: pathFor(location) }));
+};
 
 export default function OperationsDashboard() {
   const [activeTab, setActiveTab] = useState('inventory');
@@ -26,16 +45,18 @@ export default function OperationsDashboard() {
   const [inventory, setInventory] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [recipes, setRecipes] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const [inventoryResult, supplierResult, recipeResult] = await Promise.all([
-        module2Api.getInventory(), module2Api.getSuppliers(), module2Api.getRecipes()
+      const [inventoryResult, supplierResult, recipeResult, warehouseResult] = await Promise.all([
+        module2Api.getInventory(), module2Api.getSuppliers(), module2Api.getRecipes(), warehouseService.getWarehouses()
       ]);
       setInventory(inventoryForUi(inventoryResult.inventory));
       setSuppliers(supplierResult);
+      setWarehouses(locationsForUi(warehouseResult));
       setRecipes(recipeResult.map((recipe) => ({
         ...recipe,
         name: recipe.productName,
@@ -91,7 +112,7 @@ export default function OperationsDashboard() {
     const po = await module2Api.createPurchaseOrder({
       poNumber: `PO-${Date.now()}`,
       supplierId: payload.supplierId,
-      warehouseName: payload.location,
+      warehouseId: payload.warehouseId,
       items: [{ itemName: payload.productName, sku: payload.sku, orderedQuantity: payload.quantityReceived, unitCost: payload.unitCost, unitOfMeasure: payload.unit }]
     });
     await module2Api.ingestShipment(po._id, { receivedItems: [{ sku: payload.sku, quantity: payload.quantityReceived }], verifiedWeight: payload.quantityReceived });
@@ -99,7 +120,7 @@ export default function OperationsDashboard() {
   };
   const executeRun = async (payload) => {
     const recipe = recipes.find((item) => item._id === payload.recipeId);
-    await module2Api.executeManufacturingRun({ recipeId: payload.recipeId, quantityProduced: Number(payload.batches) * Number(recipe?.batchYieldQuantity || 1) });
+    await module2Api.executeManufacturingRun({ recipeId: payload.recipeId, warehouseId: payload.warehouseId, quantityProduced: Number(payload.batches) * Number(recipe?.batchYieldQuantity || 1) });
     setShowRunModal(false);
     await refresh();
   };
@@ -124,11 +145,11 @@ export default function OperationsDashboard() {
         {loading ? <div className="py-20 text-center text-emerald-400"><RefreshCw className="w-8 h-8 animate-spin mx-auto" />Loading operations…</div> : <>
           {activeTab === 'inventory' && <div className="space-y-6"><LowStockAlertBanner inventory={inventory} onQuickRestock={() => setActiveTab('po')} /><div className="module2-inventory-heading flex justify-between items-center bg-emerald-950/40 border border-emerald-500/20 rounded-2xl p-6"><div><h2 className="text-xl font-bold">Raw Material Inventory Ledger</h2><p className="text-sm text-emerald-200/70">Tenant-isolated operational balances.</p></div><button type="button" disabled={recipes.length === 0} title={recipes.length === 0 ? 'Create a BOM recipe before launching production' : undefined} onClick={() => setShowRunModal(true)} className="px-4 py-2 bg-emerald-500 text-black rounded-xl flex gap-2"><PlayCircle className="w-4 h-4" />Launch Production Run</button></div><div className="bg-emerald-950/30 rounded-2xl overflow-x-auto"><table className="w-full text-left"><thead><tr><th>Material</th><th>SKU</th><th>Stock</th><th>Safety target</th><th>Location</th><th>Status</th></tr></thead><tbody>{inventory.map((item) => <tr key={item._id}><td>{item.name}</td><td>{item.sku}</td><td>{item.currentBalance} {item.unit}</td><td>{item.safetyStock} {item.unit}</td><td>{item.location}</td><td>{item.currentBalance <= item.safetyStock ? 'Low Stock' : 'Optimal'}</td></tr>)}</tbody></table>{inventory.length === 0 && <p className="p-8 text-center">No materials yet. Receive a purchase order to add stock.</p>}</div></div>}
           {activeTab === 'suppliers' && <SupplierDirectory suppliers={suppliers} onAddSupplier={addSupplier} onUpdateSupplier={updateSupplier} onDeleteSupplier={deleteSupplier} />}
-          {activeTab === 'po' && <POIngestionPanel suppliers={suppliers} onIngestPO={ingestPurchase} />}
+          {activeTab === 'po' && <POIngestionPanel suppliers={suppliers} warehouses={warehouses} onIngestPO={ingestPurchase} />}
           {activeTab === 'recipes' && <DynamicRecipeBuilder inventory={inventory} recipes={recipes} onAddRecipe={addRecipe} onDeleteRecipe={deleteRecipe} />}
         </>}
       </main>
-      {showRunModal && <ManufacturingRunModal recipes={recipes} inventory={inventory} onClose={() => setShowRunModal(false)} onExecute={executeRun} />}
+      {showRunModal && <ManufacturingRunModal recipes={recipes} inventory={inventory} warehouses={warehouses} onClose={() => setShowRunModal(false)} onExecute={executeRun} />}
     </div>
   );
 }

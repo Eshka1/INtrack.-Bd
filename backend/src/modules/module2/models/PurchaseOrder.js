@@ -13,6 +13,7 @@ const schema = new mongoose.Schema({
   tenantId: { type: String, required: true, index: true },
   poNumber: { type: String, required: true, trim: true },
   supplierId: { type: mongoose.Schema.Types.ObjectId, ref: 'Module2Supplier', required: true },
+  warehouse: { type: mongoose.Schema.Types.ObjectId, ref: 'Warehouse', index: true },
   warehouseName: { type: String, default: 'Main Warehouse', trim: true },
   items: { type: [itemSchema], validate: [(items) => items.length > 0, 'At least one item is required'] },
   totalCost: { type: Number, default: 0, min: 0 },

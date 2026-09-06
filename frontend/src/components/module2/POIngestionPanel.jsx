@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Truck, CheckCircle2, DollarSign, Building2, Package, Lock } from 'lucide-react';
 
-export default function POIngestionPanel({ suppliers, onIngestPO }) {
+export default function POIngestionPanel({ suppliers, warehouses, onIngestPO }) {
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantityReceived, setQuantityReceived] = useState('');
-  const [location, setLocation] = useState('Main Warehouse Dock');
+  const [warehouseId, setWarehouseId] = useState('');
   const [successMsg, setSuccessMsg] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState('');
@@ -50,7 +50,7 @@ export default function POIngestionPanel({ suppliers, onIngestPO }) {
         unitCost: unitCost,
         totalCost: totalCost,
         unit: selectedProduct.unit || 'units',
-        location
+        warehouseId
       });
     } catch (requestError) {
       setActionError(requestError.response?.data?.error || 'The purchase order could not be received.');
@@ -197,12 +197,16 @@ export default function POIngestionPanel({ suppliers, onIngestPO }) {
 
           <div>
             <label className="block text-xs font-semibold text-emerald-400 mb-1">Storage Destination</label>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
+            <select
+              required
+              value={warehouseId}
+              onChange={(e) => setWarehouseId(e.target.value)}
               className="w-full bg-[#071d15] border border-emerald-500/40 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-400"
-            />
+            >
+              <option value="">-- Choose Warehouse Location --</option>
+              {warehouses.map((warehouse) => <option key={warehouse._id} value={warehouse._id}>{warehouse.displayName} ({warehouse.locationType})</option>)}
+            </select>
+            {warehouses.length === 0 && <p className="module2-action-note">Create an active warehouse location before receiving stock.</p>}
           </div>
         </div>
 
@@ -223,7 +227,7 @@ export default function POIngestionPanel({ suppliers, onIngestPO }) {
 
         <button
           type="submit"
-          disabled={!selectedSupplierId || !selectedProduct || qty <= 0 || submitting}
+          disabled={!selectedSupplierId || !selectedProduct || !warehouseId || qty <= 0 || submitting}
           className={`w-full py-3 rounded-xl font-bold transition cursor-pointer shadow-lg shadow-emerald-500/20 ${
             selectedSupplierId && selectedProduct && qty > 0
               ? 'bg-emerald-500 hover:bg-emerald-400 text-black'
