@@ -53,6 +53,7 @@ const Dashboard = () => {
           <Link to="/warehouses" className="link-nav">Warehouses</Link>
           <Link to="/team" className="link-nav">Team &amp; Roles</Link>
           <Link to="/billing" className="link-nav">Billing</Link>
+          <Link to="/module4" className="link-nav">Module 4</Link>
           <span>{user?.firstName} {user?.lastName} · {user?.role}</span>
           <button onClick={logout}>Log Out</button>
         </div>

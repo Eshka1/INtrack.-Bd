@@ -41,8 +41,8 @@ const RegisterCompany = () => {
     setSubmitting(true);
     try {
       const { confirmPassword, ...payload } = form;
-      await registerCompany(payload);
-      navigate('/dashboard');
+      const result = await registerCompany(payload);
+      navigate(result.mode === 'local-auth-fallback' ? '/module4' : '/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');
     } finally {

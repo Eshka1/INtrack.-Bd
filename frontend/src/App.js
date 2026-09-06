@@ -18,6 +18,7 @@ import ExpenseCreatePage from './pages/ExpenseCreatePage';
 import PayablesPage from './pages/PayablesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import CurrencySettingsPage from './pages/CurrencySettingsPage';
+import Module4Page from './pages/Module4Page';
 
 import './App.css';
 
@@ -122,6 +123,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <CurrencySettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/module4"
+            element={
+              <ProtectedRoute>
+                <Module4Page />
               </ProtectedRoute>
             }
           />

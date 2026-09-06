@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const Tenant = require('../models/Tenant');
 const User = require('../models/User');
 const Role = require('../models/Role');
@@ -6,6 +7,15 @@ const SubscriptionTier = require('../models/SubscriptionTier');
 const { generateToken } = require('../utils/generateToken');
 const { AppError } = require('../utils/errorHandler');
 const asyncHandler = require('../utils/asyncHandler');
+const localAuthStore = require('../utils/localAuthStore');
+
+
+const localFallbackEnabled = () =>
+  process.env.NODE_ENV !== 'production' &&
+  String(process.env.ALLOW_LOCAL_AUTH_FALLBACK || 'true').toLowerCase() !== 'false';
+
+const shouldUseLocalAuth = () =>
+  localFallbackEnabled() && mongoose.connection.readyState !== 1;
 
 // Generates a short, unique, URL-safe tenant identifier.
 // This is the value stamped onto every single row a company ever creates.
@@ -33,6 +43,34 @@ const registerCompany = asyncHandler(async (req, res) => {
 
   if (!companyName || !companyEmail || !industry || !firstName || !lastName || !ownerEmail || !password) {
     throw new AppError('Please provide all required fields', 400);
+  }
+
+  if (shouldUseLocalAuth()) {
+    try {
+      const { user, tenant } = await localAuthStore.registerCompany({
+        companyName, companyEmail, industry, phoneNumber, firstName, lastName, ownerEmail, password
+      });
+      const token = generateToken(user._id);
+      return res.status(201).json({
+        success: true,
+        message: 'Company registered successfully (local development mode)',
+        mode: 'local-auth-fallback',
+        token,
+        data: {
+          tenantId: tenant.tenantId,
+          companyName: tenant.companyName,
+          user: {
+            id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role.name
+          }
+        }
+      });
+    } catch (error) {
+      throw new AppError(error.message || 'Registration failed', error.statusCode || 400);
+    }
   }
 
   // Check for existing company or user email up front (outside the transaction
@@ -139,6 +177,26 @@ const login = asyncHandler(async (req, res) => {
     throw new AppError('Please provide email and password', 400);
   }
 
+  if (shouldUseLocalAuth()) {
+    const user = await localAuthStore.authenticate(email, password);
+    if (!user) throw new AppError('Invalid credentials', 401);
+    const token = generateToken(user._id);
+    return res.status(200).json({
+      success: true,
+      mode: 'local-auth-fallback',
+      token,
+      data: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role.name,
+        tenantId: user.tenantId,
+        companyName: user.tenant.companyName
+      }
+    });
+  }
+
   const user = await User.findOne({ email: email.toLowerCase(), deletedAt: null })
     .select('+password')
     .populate('role')
@@ -205,7 +263,8 @@ const getMe = asyncHandler(async (req, res) => {
       role: req.user.role.name,
       tenantId: req.tenantId,
       companyName: req.tenant.companyName,
-      currency: req.tenant.currency
+      currency: req.tenant.currency,
+      developmentMode: String(req.user._id || '').startsWith('local_user_') ? 'local-auth-fallback' : null
     }
   });
 });

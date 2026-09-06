@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+**/node_modules/
+**/node_modules.*
+
+# Environment / secrets
+.env
+**/.env
+.env.*
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Build / test output
+dist/
+**/dist/
+build/
+**/build/
+coverage/
+**/coverage/
+
+# Local-only Module 4 / auth development data
+My Features/
+backend/data/local-auth.json
+backend/data/module4-store.json
+
+# Logs / editor / OS
+*.log
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

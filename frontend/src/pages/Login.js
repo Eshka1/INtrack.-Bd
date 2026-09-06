@@ -15,8 +15,8 @@ const Login = () => {
     setError('');
     setSubmitting(true);
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      const result = await login(email, password);
+      navigate(result.mode === 'local-auth-fallback' ? '/module4' : '/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
     } finally {

@@ -49,7 +49,8 @@ export const TenantProvider = ({ children }) => {
       email: res.data.user.email,
       role: res.data.user.role,
       tenantId: res.data.tenantId,
-      companyName: res.data.companyName
+      companyName: res.data.companyName,
+      developmentMode: res.mode || null
     });
     return res;
   };
@@ -58,7 +59,7 @@ export const TenantProvider = ({ children }) => {
     setError(null);
     const res = await authService.login(email, password);
     localStorage.setItem('intrack_token', res.token);
-    setUser(res.data);
+    setUser({ ...res.data, developmentMode: res.mode || res.data.developmentMode || null });
     return res;
   };
 

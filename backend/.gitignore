@@ -27,3 +27,5 @@ coverage/
 # Build output (if any gets added later)
 dist/
 build/
+data/local-auth.json
+data/module4-store.json

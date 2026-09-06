@@ -8,6 +8,7 @@ const links = [
   { to: "/finance/payables", label: "Payables" },
   { to: "/finance/analytics", label: "Analytics" },
   { to: "/finance/settings", label: "Currency" },
+  { to: "/module4", label: "Module 4" },
 ];
 
 export default function NeuNavbar() {
