@@ -8,6 +8,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
 const { errorHandler } = require('./utils/errorHandler');
+const { protect } = require('./middleware/auth');
 
 const authRoutes = require('./routes/authRoutes');
 const itemRoutes = require('./routes/itemRoutes');
@@ -17,6 +18,7 @@ const teamRoutes = require('./routes/teamRoutes');
 const assetCategoryRoutes = require('./routes/assetCategoryRoutes');
 const warehouseRoutes = require('./routes/warehouseRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
+const financeRoutes = require('./src/modules/finance/routes/financeRoutes');
 
 /**
  * This file builds and exports the Express `app` only — no DB connection,
@@ -34,7 +36,7 @@ app.use(helmet());
 
 // CORS - restrict to the frontend origin
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: process.env.CLIENT_URL || process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
   credentials: true
 }));
 
@@ -70,6 +72,12 @@ app.use('/api/team', teamRoutes);
 app.use('/api/asset-categories', assetCategoryRoutes);
 app.use('/api/warehouses', warehouseRoutes);
 app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/finance', (req, res, next) => {
+  if (req.headers.authorization) {
+    return protect(req, res, next);
+  }
+  next();
+}, financeRoutes);
 
 // 404 handler
 app.use((req, res) => {
