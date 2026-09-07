@@ -34,7 +34,7 @@ async function getBudgets(req, res, next) {
 async function getBudgetSummary(req, res, next) {
   try {
     const { companyId } = req.auth;
-    const summary = await budgetService.getBudgetSummary(companyId);
+    const summary = await budgetService.getBudgetSummary(companyId, req.query.currency);
 
     res.status(200).json({
       success: true,

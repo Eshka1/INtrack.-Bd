@@ -2,6 +2,7 @@ const payableRepo = require('../repositories/payableRepository');
 const { getCompanyRates } = require('./currencyService');
 const { convertCurrency, roundMoney } = require('../utils/money');
 const { calculateAgingAndStatus } = require('../utils/aging');
+const { getDisplayContext, presentPayable } = require('./moneyPresentationService');
 
 class PayableNotFoundError extends Error {
   constructor(message = 'Account payable record not found') {
@@ -87,8 +88,9 @@ async function listPayables(companyId, query = {}) {
     payableRepo.countPayables(filter)
   ]);
 
+  const display = await getDisplayContext(companyId, query.currency);
   return {
-    payables,
+    payables: payables.map((item) => presentPayable(item, display)),
     meta: {
       page,
       pageSize,

@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "migrate:module2-currency": "node scripts/backfillModule2Currency.js",
     "test": "jest --detectOpenHandles --runInBand"
   },
   "jest": {

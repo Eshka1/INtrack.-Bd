@@ -4,6 +4,7 @@ import NeuCard from "../components/ui/NeuCard";
 import NeuInput from "../components/ui/NeuInput";
 import NeuButton from "../components/ui/NeuButton";
 import NeuBadge from "../components/ui/NeuBadge";
+import useDisplayCurrency from "../hooks/useDisplayCurrency";
 
 const emptyForm = {
   supplierName: "",
@@ -23,6 +24,7 @@ function agingVariant(group) {
 }
 
 const PayablesPage = () => {
+  const displayCurrency = useDisplayCurrency();
   const [payables, setPayables] = useState([]);
   const [aging, setAging] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -59,8 +61,8 @@ const PayablesPage = () => {
     setError(null);
     setSuccessMsg("");
     try {
-      await createPayable({ ...form, totalAmount: Number(form.totalAmount) });
-      setForm(emptyForm);
+      await createPayable({ ...form, currency: displayCurrency, totalAmount: Number(form.totalAmount) });
+      setForm({ ...emptyForm, currency: displayCurrency });
       setSuccessMsg("Payable created successfully!");
       load();
     } catch (err) {
@@ -102,7 +104,7 @@ const PayablesPage = () => {
               <NeuCard key={group} className="p-4">
                 <p className="text-xs text-neuTextMuted">{group}</p>
                 <p className="text-lg font-bold text-neuTextDark mt-1">
-                  {data.totalOutstanding?.toLocaleString()}
+                  {data.totalOutstanding?.toLocaleString()} {aging.currency}
                 </p>
                 <p className="text-xs text-neuTextMuted">{data.count} invoice(s)</p>
               </NeuCard>
@@ -116,7 +118,7 @@ const PayablesPage = () => {
             <NeuInput name="supplierName" value={form.supplierName} onChange={handleChange} placeholder="Supplier name" />
             <NeuInput name="invoiceNumber" value={form.invoiceNumber} onChange={handleChange} placeholder="Invoice number" />
             <NeuInput name="purchaseOrderNumber" value={form.purchaseOrderNumber} onChange={handleChange} placeholder="PO number (optional)" />
-            <NeuInput name="totalAmount" type="number" value={form.totalAmount} onChange={handleChange} placeholder="Total amount" />
+            <NeuInput name="totalAmount" type="number" value={form.totalAmount} onChange={handleChange} placeholder={`Total amount (${displayCurrency})`} />
             <NeuInput name="issueDate" type="date" value={form.issueDate} onChange={handleChange} placeholder="Issue date" />
             <NeuInput name="dueDate" type="date" value={form.dueDate} onChange={handleChange} placeholder="Due date" />
             <div className="sm:col-span-3">
@@ -156,7 +158,7 @@ const PayablesPage = () => {
                         {new Date(p.dueDate).toLocaleDateString()}
                       </td>
                       <td className="py-2 pr-4 font-semibold text-neuPrimary">
-                        {p.outstandingAmount?.toLocaleString()} {p.currency}
+                        {(p.displayOutstandingAmount ?? p.outstandingAmount)?.toLocaleString()} {p.displayCurrency || p.currency}
                       </td>
                       <td className="py-2 pr-4">
                         <NeuBadge variant={agingVariant(p.agingGroup)}>{p.agingGroup}</NeuBadge>
@@ -187,13 +189,13 @@ const PayablesPage = () => {
               Record Payment — {payModal.supplierName}
             </h3>
             <p className="text-sm text-neuTextMuted mb-4">
-              Outstanding: {payModal.outstandingAmount?.toLocaleString()} {payModal.currency}
+              Outstanding: {(payModal.displayOutstandingAmount ?? payModal.outstandingAmount)?.toLocaleString()} {payModal.displayCurrency || payModal.currency}
             </p>
             <NeuInput
               type="number"
               value={payAmount}
               onChange={(e) => setPayAmount(e.target.value)}
-              placeholder="Payment amount"
+              placeholder={`Payment amount (${payModal.currency})`}
             />
             <div className="flex gap-3 mt-4">
               <NeuButton onClick={handleRecordPayment}>Confirm Payment</NeuButton>

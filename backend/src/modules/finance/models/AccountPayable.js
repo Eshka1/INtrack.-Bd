@@ -170,6 +170,10 @@ accountPayableSchema.index({ companyId: 1, dueDate: 1 });
 accountPayableSchema.index({ companyId: 1, status: 1, dueDate: 1 });
 accountPayableSchema.index({ companyId: 1, supplierName: 1 });
 accountPayableSchema.index({ companyId: 1, invoiceNumber: 1 }, { unique: true });
+accountPayableSchema.index(
+  { companyId: 1, purchaseOrderId: 1 },
+  { unique: true, partialFilterExpression: { purchaseOrderId: { $type: 'string' } } }
+);
 
 const AccountPayable = mongoose.model('AccountPayable', accountPayableSchema);
 

@@ -3,6 +3,7 @@ import { getBudgets, createBudget, updateBudget, deleteBudget } from "../service
 import NeuCard from "../components/ui/NeuCard";
 import NeuInput from "../components/ui/NeuInput";
 import NeuButton from "../components/ui/NeuButton";
+import useDisplayCurrency from "../hooks/useDisplayCurrency";
 
 // inline svg icons
 const BudgetNameIcon = () => (
@@ -21,6 +22,7 @@ const AmountIcon = () => (
 );
 
 const BudgetPage = () => {
+  const displayCurrency = useDisplayCurrency();
   const [budgetId, setBudgetId] = useState(null);
   const [budgetAmount, setBudgetAmount] = useState("");
   const [budgetName, setBudgetName] = useState("Monthly Budget");
@@ -38,7 +40,7 @@ const BudgetPage = () => {
         if (existing) {
           setBudgetId(existing._id);
           setBudgetName(existing.name);
-          setBudgetAmount(String(existing.monthlyAmount));
+          setBudgetAmount(String(existing.displayMonthlyAmount ?? existing.monthlyAmount));
         }
       } catch (err) {
         setError("Failed to load budget data");
@@ -59,7 +61,7 @@ const BudgetPage = () => {
 
     const payload = {
       name: budgetName,
-      currency: "BDT",
+      currency: displayCurrency,
       category: "Other",
       dueDay: 1,
       startDate: new Date().toISOString(),
@@ -151,7 +153,7 @@ const BudgetPage = () => {
 
             <div>
               <label className="text-sm font-medium text-neuTextMuted">
-                Monthly Budget (BDT)
+                Monthly Budget ({displayCurrency})
               </label>
               <div className="mt-1">
                 <NeuInput

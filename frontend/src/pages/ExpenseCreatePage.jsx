@@ -4,6 +4,7 @@ import NeuCard from "../components/ui/NeuCard";
 import NeuInput from "../components/ui/NeuInput";
 import NeuSelect from "../components/ui/NeuSelect";
 import NeuButton from "../components/ui/NeuButton";
+import useDisplayCurrency from "../hooks/useDisplayCurrency";
 
 const CATEGORIES = ["Transport", "Salary", "Utilities", "Maintenance", "Raw Materials", "Office", "Rent", "Other"];
 
@@ -49,6 +50,7 @@ const ReceiptIcon = () => (
 );
 
 const ExpenseCreatePage = () => {
+  const displayCurrency = useDisplayCurrency();
   const [formData, setFormData] = useState(initialForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -78,7 +80,7 @@ const ExpenseCreatePage = () => {
     }
 
     try {
-      const payload = { ...formData, amount: Number(formData.amount) };
+      const payload = { ...formData, amount: Number(formData.amount), currency: displayCurrency };
       await createExpense(payload);
       setSuccessMsg("Expense created successfully!");
       setFormData(initialForm);
@@ -132,7 +134,7 @@ const ExpenseCreatePage = () => {
               type="number"
               value={formData.amount}
               onChange={handleChange}
-              placeholder="Amount (BDT)"
+              placeholder={`Amount (${displayCurrency})`}
               icon={<AmountIcon />}
             />
             <NeuSelect

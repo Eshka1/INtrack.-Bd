@@ -51,6 +51,7 @@ const Dashboard = () => {
         <div className="user-info">
           <Link to="/categories" className="link-nav">Categories</Link>
           <Link to="/warehouses" className="link-nav">Warehouses</Link>
+          <Link to="/operations" className="link-nav">Inventory Operations</Link>
           <Link to="/team" className="link-nav">Team &amp; Roles</Link>
           <Link to="/billing" className="link-nav">Billing</Link>
           <span>{user?.firstName} {user?.lastName} · {user?.role}</span>

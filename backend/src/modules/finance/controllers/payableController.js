@@ -35,7 +35,7 @@ async function getPayables(req, res, next) {
 async function getAgingLedger(req, res, next) {
   try {
     const { companyId } = req.auth;
-    const aging = await agingService.getAgingLedger(companyId);
+    const aging = await agingService.getAgingLedger(companyId, req.query.currency);
 
     res.status(200).json({
       success: true,

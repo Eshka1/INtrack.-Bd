@@ -1,6 +1,7 @@
 const expenseRepo = require('../repositories/expenseRepository');
 const { getCompanyRates } = require('./currencyService');
 const { convertCurrency, roundMoney } = require('../utils/money');
+const { getDisplayContext, displayFromNormalized, presentExpense } = require('./moneyPresentationService');
 
 class ExpenseNotFoundError extends Error {
   constructor(message = 'Expense record not found') {
@@ -60,8 +61,9 @@ async function listExpenses(companyId, query = {}) {
     expenseRepo.countExpenses(filter)
   ]);
 
+  const display = await getDisplayContext(companyId, query.currency);
   return {
-    expenses,
+    expenses: expenses.map((item) => presentExpense(item, display)),
     meta: {
       page,
       pageSize,
@@ -118,7 +120,7 @@ async function deleteExpense(companyId, expenseId) {
 }
 
 async function getExpenseSummary(companyId, filterParams = {}) {
-  return await expenseRepo.getExpenseSummaryAggregation({
+  const summary = await expenseRepo.getExpenseSummaryAggregation({
     companyId,
     month: filterParams.month || null,
     year: filterParams.year || null,
@@ -128,6 +130,14 @@ async function getExpenseSummary(companyId, filterParams = {}) {
     endDate: filterParams.endDate || null,
     search: filterParams.search || null
   });
+  const display = await getDisplayContext(companyId, filterParams.currency);
+  return {
+    ...summary,
+    totalAmount: displayFromNormalized(summary.totalAmount, display),
+    averageAmount: displayFromNormalized(summary.averageAmount, display),
+    currency: display.displayCurrency,
+    categoryBreakdown: Object.fromEntries(Object.entries(summary.categoryBreakdown).map(([category, value]) => [category, { ...value, totalAmount: displayFromNormalized(value.totalAmount, display) }]))
+  };
 }
 
 module.exports = {

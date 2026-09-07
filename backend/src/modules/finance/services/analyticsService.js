@@ -35,8 +35,9 @@ async function getSpendingTrend(companyId, { startDate, endDate, groupBy = 'mont
   ];
 
   const results = await Expense.aggregate(pipeline);
-  const rates = await getCompanyRates(companyId);
-  const targetCurrency = (currency || 'BDT').toUpperCase();
+  const setting = await getOrCreateCurrencySetting(companyId);
+  const rates = setting.exchangeRates instanceof Map ? Object.fromEntries(setting.exchangeRates) : setting.exchangeRates;
+  const targetCurrency = (currency || setting.displayCurrency || 'BDT').toUpperCase();
 
   return results.map(item => {
     const normalizedBDT = roundMoney(item.totalNormalizedAmount);
@@ -77,8 +78,9 @@ async function getCategoryBreakdown(companyId, { startDate, endDate, currency })
   ];
 
   const results = await Expense.aggregate(pipeline);
-  const rates = await getCompanyRates(companyId);
-  const targetCurrency = (currency || 'BDT').toUpperCase();
+  const setting = await getOrCreateCurrencySetting(companyId);
+  const rates = setting.exchangeRates instanceof Map ? Object.fromEntries(setting.exchangeRates) : setting.exchangeRates;
+  const targetCurrency = (currency || setting.displayCurrency || 'BDT').toUpperCase();
 
   const totalOverall = results.reduce((acc, cur) => acc + cur.totalNormalizedAmount, 0);
 
@@ -103,8 +105,9 @@ async function getCategoryBreakdown(companyId, { startDate, endDate, currency })
  */
 async function getConsumptionTrend(companyId, { startDate, endDate, materialId, currency }) {
   const results = await getConsumptionTrendAggregation({ companyId, startDate, endDate, materialId });
-  const rates = await getCompanyRates(companyId);
-  const targetCurrency = (currency || 'BDT').toUpperCase();
+  const setting = await getOrCreateCurrencySetting(companyId);
+  const rates = setting.exchangeRates instanceof Map ? Object.fromEntries(setting.exchangeRates) : setting.exchangeRates;
+  const targetCurrency = (currency || setting.displayCurrency || 'BDT').toUpperCase();
 
   return results.map(item => {
     const convertedCost = convertCurrency(item.totalCost, 'BDT', targetCurrency, rates);
@@ -203,6 +206,8 @@ async function getDashboardSummary(companyId, { currency } = {}) {
       category: e.category,
       amount: e.amount,
       currency: e.currency,
+      displayAmount: convertCurrency(e.normalizedAmount, 'BDT', targetCurrency, rates),
+      displayCurrency: targetCurrency,
       expenseDate: e.expenseDate
     })),
     upcomingPayments: upcomingPayables.map(p => ({
@@ -211,6 +216,8 @@ async function getDashboardSummary(companyId, { currency } = {}) {
       invoiceNumber: p.invoiceNumber,
       outstandingAmount: p.outstandingAmount,
       currency: p.currency,
+      displayOutstandingAmount: convertCurrency(p.normalizedOutstandingAmount, 'BDT', targetCurrency, rates),
+      displayCurrency: targetCurrency,
       dueDate: p.dueDate,
       status: p.status,
       agingGroup: p.agingGroup
