@@ -1,0 +1,148 @@
+{
+  "tenants": [
+    {
+      "name": "mjgkugciktxi",
+      "email": "admin@gmail.com",
+      "subscription": "Premium",
+      "_id": "tenants-1788730882015-vjzg5y",
+      "createdAt": "2026-09-06T21:41:22.015Z"
+    },
+    {
+      "name": "jhgjutcuktuktu",
+      "email": "farhan.ahmed1@g.bracu.ac.bd",
+      "subscription": "Premium",
+      "_id": "tenants-1788730827015-6tphdx",
+      "createdAt": "2026-09-06T21:40:27.015Z",
+      "updatedAt": "2026-09-06T21:40:31.840Z"
+    }
+  ],
+  "auditlogs": [
+    {
+      "tenantId": "tn_c1b71332c6fa5c49",
+      "userId": "6a9ddd6c960fb36fdfa4ea1d",
+      "userName": "Farhan Ahmed",
+      "entity": "Subscription",
+      "action": "CREATE",
+      "recordRef": "mjgkugciktxi",
+      "reason": "Super admin registered a new company",
+      "oldValue": null,
+      "newValue": {
+        "company": "mjgkugciktxi",
+        "email": "admin@gmail.com",
+        "plan": "Premium"
+      },
+      "_id": "auditlogs-1788730882016-5xwagw",
+      "createdAt": "2026-09-06T21:41:22.016Z"
+    },
+    {
+      "tenantId": "tn_c1b71332c6fa5c49",
+      "userId": "6a9ddd6c960fb36fdfa4ea1d",
+      "userName": "Farhan Ahmed",
+      "entity": "Subscription",
+      "action": "UPDATE",
+      "recordRef": "jhgjutcuktuktu",
+      "reason": "Super admin changed company subscription from Basic to Premium",
+      "oldValue": {
+        "plan": "Basic"
+      },
+      "newValue": {
+        "plan": "Premium"
+      },
+      "_id": "auditlogs-1788730831840-y357tk",
+      "createdAt": "2026-09-06T21:40:31.840Z"
+    },
+    {
+      "tenantId": "tn_c1b71332c6fa5c49",
+      "userId": "6a9ddd6c960fb36fdfa4ea1d",
+      "userName": "Farhan Ahmed",
+      "entity": "Subscription",
+      "action": "CREATE",
+      "recordRef": "jhgjutcuktuktu",
+      "reason": "Super admin registered a new company",
+      "oldValue": null,
+      "newValue": {
+        "company": "jhgjutcuktuktu",
+        "email": "farhan.ahmed1@g.bracu.ac.bd",
+        "plan": "Basic"
+      },
+      "_id": "auditlogs-1788730827016-owv0b9",
+      "createdAt": "2026-09-06T21:40:27.016Z"
+    },
+    {
+      "tenantId": "tn_c1b71332c6fa5c49",
+      "userId": "6a9ddd6c960fb36fdfa4ea1d",
+      "userName": "Farhan Ahmed",
+      "entity": "Inventory",
+      "action": "UPDATE",
+      "recordRef": "jkgktkututxukxtktkxtk",
+      "reason": "liuolydoluolfuoudiul",
+      "oldValue": {
+        "quantity": 148,
+        "status": "Available"
+      },
+      "newValue": {
+        "quantity": 150,
+        "status": "Available"
+      },
+      "_id": "auditlogs-1788730800023-tob2wu",
+      "createdAt": "2026-09-06T21:40:00.023Z"
+    }
+  ],
+  "activitylogs": [
+    {
+      "tenantId": "tn_c1b71332c6fa5c49",
+      "userId": "6a9ddd6c960fb36fdfa4ea1d",
+      "entity": "Inventory",
+      "action": "UPDATE",
+      "recordRef": "jkgktkututxukxtktkxtk",
+      "_id": "activitylogs-1788730800024-sfdxkh",
+      "createdAt": "2026-09-06T21:40:00.024Z"
+    }
+  ],
+  "notifications": [
+    {
+      "tenantId": "tn_c1b71332c6fa5c49",
+      "type": "SUBSCRIPTION_CHANGE",
+      "title": "Subscription changed",
+      "message": "Farhan Ahmed changed jhgjutcuktuktu from Basic to Premium.",
+      "actorId": "6a9ddd6c960fb36fdfa4ea1d",
+      "actorName": "Farhan Ahmed",
+      "entity": "Subscription",
+      "action": "UPDATE",
+      "recordRef": "jhgjutcuktuktu",
+      "changes": [
+        {
+          "key": "plan",
+          "before": "Basic",
+          "after": "Premium"
+        }
+      ],
+      "isRead": true,
+      "_id": "notifications-1788730831841-id1qal",
+      "createdAt": "2026-09-06T21:40:31.841Z",
+      "updatedAt": "2026-09-06T21:41:33.667Z"
+    },
+    {
+      "tenantId": "tn_c1b71332c6fa5c49",
+      "type": "AUDIT_CHANGE",
+      "title": "Inventory update",
+      "message": "Farhan Ahmed changed Inventory jkgktkututxukxtktkxtk.",
+      "actorId": "6a9ddd6c960fb36fdfa4ea1d",
+      "actorName": "Farhan Ahmed",
+      "entity": "Inventory",
+      "action": "UPDATE",
+      "recordRef": "jkgktkututxukxtktkxtk",
+      "changes": [
+        {
+          "key": "quantity",
+          "before": 148,
+          "after": 150
+        }
+      ],
+      "isRead": true,
+      "_id": "notifications-1788730800025-j3poko",
+      "createdAt": "2026-09-06T21:40:00.025Z",
+      "updatedAt": "2026-09-06T21:41:33.668Z"
+    }
+  ]
+}
